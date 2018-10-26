@@ -12,6 +12,7 @@ start
   JSR clear
   JSR black
   LDX #$09
+  JSR loadMonsters
   JMP movementStart
   RTS
 
@@ -19,6 +20,83 @@ black
   LDX #$0
   STX 36879
   RTS
+
+loadMonsters
+  LDA #$D4  ; $e2-e3 = #$1ED4 < - 1st monster starting location
+  STA $e2
+  LDA #$1E
+  STA $e3
+
+  LDA #$1
+  STA $e0
+
+  LDA #$14
+  LDY #$0
+  STA ($e2),Y
+  RTS
+
+monsterMovement
+  LDA $e2
+  CMP #$D5
+  BEQ leftMoveBorder
+
+  LDA $e2
+  CMP #$D0
+  BEQ rightMoveBorder
+
+  LDA $e0
+  CMP #$1
+  BEQ monsterLeftMove
+
+  LDA $e0
+  CMP #$0
+  BEQ monsterRightMove
+
+  RTS
+
+monsterLeftMove
+  JSR eraseMonster
+  LDA $e2
+  SEC
+  SBC #$1
+  STA $e2
+  JSR drawMonster
+  RTS
+
+monsterRightMove
+  JSR eraseMonster
+  LDA $e2
+  CLC
+  ADC #$1
+  STA $e2
+  JSR drawMonster
+  RTS
+
+leftMoveBorder
+  JSR monsterLeftMove
+  LDA #$1
+  STA $e0
+  RTS
+
+rightMoveBorder
+  JSR monsterRightMove
+  LDA #$0
+  STA $e0
+  RTS
+
+eraseMonster
+  LDA #$20    ; " " symbol
+  LDY #$0
+  STA ($e2),Y
+  RTS
+
+drawMonster
+  ; New location of the sprite ;
+  LDA #$28     ; "A" symbol
+  LDY #$0
+  STA ($e2),Y
+  RTS
+
 
 movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$E6
@@ -32,6 +110,8 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
 
 movement
   JSR wait  ; no teleporting
+
+  JSR monsterMovement
 
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
   ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
