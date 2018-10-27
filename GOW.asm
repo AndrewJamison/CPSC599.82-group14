@@ -30,12 +30,19 @@ loadMonsters
   LDA #$1
   STA $e0
 
-  LDA #$14
+  LDA #$28
   LDY #$0
   STA ($e2),Y
   RTS
 
 monsterMovement
+	LDA $d0
+	CMP #$0
+	BEQ setMonsterFlag
+	
+	LDA #$0
+	STA $d0
+
   LDA $e2
   CMP #$D5
   BEQ leftMoveBorder
@@ -53,6 +60,11 @@ monsterMovement
   BEQ monsterRightMove
 
   RTS
+	
+setMonsterFlag
+	LDA #$1
+	STA $d0
+	JMP continue
 
 monsterLeftMove
   JSR eraseMonster
@@ -60,6 +72,7 @@ monsterLeftMove
   SEC
   SBC #$1
   STA $e2
+  JSR monsterHitCheck
   JSR drawMonster
   RTS
 
@@ -69,6 +82,7 @@ monsterRightMove
   CLC
   ADC #$1
   STA $e2
+  JSR monsterHitCheck
   JSR drawMonster
   RTS
 
@@ -92,7 +106,7 @@ eraseMonster
 
 drawMonster
   ; New location of the sprite ;
-  LDA #$28     ; "A" symbol
+  LDA #$28 
   LDY #$0
   STA ($e2),Y
   RTS
@@ -112,6 +126,8 @@ movement
   JSR wait  ; no teleporting
 
   JSR monsterMovement
+	
+continue
 
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
   ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
@@ -170,7 +186,8 @@ leftMove
   STA $f0
   LDA $f5
   STA $f1
-
+  
+  JSR monsterHitCheck
   jmp newSprite
 
 rightMove
@@ -195,6 +212,8 @@ rightMove
   STA $f0
   LDA $f5
   STA $f1
+	
+  JSR monsterHitCheck
   jmp newSprite
 
 downMove
@@ -217,6 +236,8 @@ downMove
   STA $f0
   LDA $f5
   STA $f1
+	
+  JSR monsterHitCheck
   jmp newSprite
 
 
@@ -241,7 +262,42 @@ upMove
   STA $f0
   LDA $f5
   STA $f1
+	
+  JSR monsterHitCheck
   jmp newSprite
+  
+monsterHitCheck
+	LDA $f0
+	CMP $e2
+	BEQ	monsterHit
+	
+	RTS
+	
+monsterHit
+	JSR clear
+	JMP gameEndScreen
+	
+gameEndScreen
+	LDA #$07
+	STA $1EE2
+	LDA #$01
+	STA $1EE3
+	LDA #$0D
+	STA $1EE4
+	LDA #$05
+	STA $1EE5
+	LDA #$0F
+	STA $1EE7
+	LDA #$16
+	STA $1EE8
+	LDA #$05
+	STA $1EE9
+	LDA #$12
+	STA $1EEA
+	JSR wait
+	JMP gameEndScreen
+	
+
 
 newSprite
   ; New location of the sprite ;
@@ -265,3 +321,14 @@ waitloop
   CMP #6
   BNE waitloop
   RTS
+	
+	
+waitLonger
+	LDA #0
+	STA 162
+
+waitLoopLong
+	LDA 162
+	CMP #12
+	BNE waitLoopLong
+	RTS
