@@ -39,7 +39,7 @@ monsterMovement
 	LDA $d0
 	CMP #$0
 	BEQ setMonsterFlag
-	
+
 	LDA #$0
 	STA $d0
 
@@ -60,7 +60,7 @@ monsterMovement
   BEQ monsterRightMove
 
   RTS
-	
+
 setMonsterFlag
 	LDA #$1
 	STA $d0
@@ -106,7 +106,7 @@ eraseMonster
 
 drawMonster
   ; New location of the sprite ;
-  LDA #$28 
+  LDA #$28
   LDY #$0
   STA ($e2),Y
   RTS
@@ -126,7 +126,7 @@ movement
   JSR wait  ; no teleporting
 
   JSR monsterMovement
-	
+
 continue
 
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
@@ -162,9 +162,9 @@ loop
   jmp loop
 
 leftMove
-; $f0 = $f0 - 1 (one space left)  
+; $f0 = $f0 - 1 (one space left)
   LDA #22
-  STA $f4 
+  STA $f4
   JSR beginMod
   LDA $f6
   CMP #2
@@ -188,16 +188,16 @@ leftMove
   STA $f0
   LDA $f5
   STA $f1
-  
+
   JSR monsterHitCheck
   jmp newSprite
 
 rightMove
   ; Delete old location of sprite ;
 
-  ; first check if right move is legal 
+  ; first check if right move is legal
   LDA #22
-  STA $f4 
+  STA $f4
   JSR beginMod
   LDA $f6
   CMP #1
@@ -221,7 +221,7 @@ rightMove
   STA $f0
   LDA $f5
   STA $f1
-	
+
   JSR monsterHitCheck
   jmp newSprite
 
@@ -233,8 +233,8 @@ goupMove
   JMP upMove
 
 downMove
-  ; check if move is legal 
-  CLC 
+  ; check if move is legal
+  CLC
   LDA $f0
   ADC #22
   STA $f6
@@ -273,22 +273,22 @@ isLegal
   STA $f0
   LDA $f5
   STA $f1
-  
+
   JSR monsterHitCheck
   jmp newSprite
 
 upMove
-  ; first check if move is legal 
-  SEC     
+  ; first check if move is legal
+  SEC
   LDA $f0
   SBC #22
   STA $f6
   LDA $f1
   SBC #00 ; f1 - 0 - (1- carry)
-  STA $f7 
+  STA $f7
 
   LDA $f7  ; if is below 1E then we can't go down
-  CMP #$1E 
+  CMP #$1E
   BMI gotomovement
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
@@ -309,21 +309,27 @@ upMove
   STA $f0
   LDA $f5
   STA $f1
-	
+
   JSR monsterHitCheck
   jmp newSprite
-  
+
 monsterHitCheck
 	LDA $f0
 	CMP $e2
-	BEQ	monsterHit
-	
+	BEQ	monsterHitCheck2
+  JMP monsterHitEnd
+monsterHitCheck2
+  LDA $f1
+  CMP $e3
+  BEQ monsterHit
+
+monsterHitEnd
 	RTS
-	
+
 monsterHit
 	JSR clear
 	JMP gameEndScreen
-	
+
 gameEndScreen
 	LDA #$07
 	STA $1EE2
@@ -343,7 +349,7 @@ gameEndScreen
 	STA $1EEA
 	JSR wait
 	JMP gameEndScreen
-	
+
 newSprite
   ; New location of the sprite ;
   LDA #$0     ; "@" symbol
@@ -366,7 +372,7 @@ waitloop
   CMP #6
   BNE waitloop
   RTS
-	
+
 waitLonger
 	LDA #0
 	STA 162
@@ -383,8 +389,8 @@ beginMod  ; this does value stored at (f1 to f0)%f4
   LDA $f1
   STA $f7
 
-mod 
-  SEC 
+mod
+  SEC
   LDA $f6
   SBC $f4
   STA $f6
