@@ -149,12 +149,10 @@ continue
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
-
   CMP #$17  ; Left arrow key
   BEQ leftMove
-
   CMP #$1F ; Up arrow key
-  BEQ upMove
+  BEQ goupMove
 
 endMovement
   jmp movement ; Constant loop for movement (could be the main game loop?)
@@ -163,10 +161,14 @@ loop
   nop
   jmp loop
 
-
 leftMove
-; $f0 = $f0 - 1 (one space left)
-
+; $f0 = $f0 - 1 (one space left)  
+  LDA #22
+  STA $f4 
+  JSR beginMod
+  LDA $f6
+  CMP #2
+  BEQ movement
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -191,9 +193,16 @@ leftMove
   jmp newSprite
 
 rightMove
-
-
   ; Delete old location of sprite ;
+
+  ; first check if right move is legal 
+  LDA #22
+  STA $f4 
+  JSR beginMod
+  LDA $f6
+  CMP #1
+  BEQ movement
+
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
@@ -216,7 +225,35 @@ rightMove
   JSR monsterHitCheck
   jmp newSprite
 
+
+gotomovement
+  jmp movement
+
+goupMove
+  JMP upMove
+
 downMove
+  ; check if move is legal 
+  CLC 
+  LDA $f0
+  ADC #22
+  STA $f6
+  LDA $f1
+  ADC #00   ; A - f1 - (1 - carry)
+  STA $f7
+
+  LDA $f7
+  CMP #$20
+  BCS gotomovement
+
+  LDA $f7
+  CMP #$1f
+  BNE isLegal
+  LDA $f6
+  CMP #$fa
+  BCS gotomovement
+
+isLegal
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -236,13 +273,23 @@ downMove
   STA $f0
   LDA $f5
   STA $f1
-	
+  
   JSR monsterHitCheck
   jmp newSprite
 
-
 upMove
+  ; first check if move is legal 
+  SEC     
+  LDA $f0
+  SBC #22
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7 
 
+  LDA $f7  ; if is below 1E then we can't go down
+  CMP #$1E 
+  BMI gotomovement
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -297,8 +344,6 @@ gameEndScreen
 	JSR wait
 	JMP gameEndScreen
 	
-
-
 newSprite
   ; New location of the sprite ;
   LDA #$0     ; "@" symbol
@@ -322,7 +367,6 @@ waitloop
   BNE waitloop
   RTS
 	
-	
 waitLonger
 	LDA #0
 	STA 162
@@ -332,3 +376,28 @@ waitLoopLong
 	CMP #12
 	BNE waitLoopLong
 	RTS
+
+beginMod  ; this does value stored at (f1 to f0)%f4
+  LDA $f0     ; load what was at f0
+  STA $f6        ; load store it at f3
+  LDA $f1
+  STA $f7
+
+mod 
+  SEC 
+  LDA $f6
+  SBC $f4
+  STA $f6
+  LDA $f7
+  SBC #00   ; A - 0 - (1 - carry)
+  STA $f7
+
+  LDA $f6
+  CMP $f4 ; f6 - 23
+  BCS mod
+
+checkLow
+  LDA $f7
+  CMP #0
+  BNE mod
+  rts
