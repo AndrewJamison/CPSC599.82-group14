@@ -332,3 +332,4 @@ waitLoopLong
 	CMP #12
 	BNE waitLoopLong
 	RTS
+;
