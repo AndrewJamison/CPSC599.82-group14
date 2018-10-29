@@ -10,36 +10,72 @@ end
 start
 
 
+
+  ;; This is the section where we copy the character values from rom to ram
   LDA #0
   STA $30
-  
 characterLoop
-  LDX $30
-  LDA $8000,X
-  STA $1C00,X
-  INC $30
+  LDX $30			;loop counter
+  LDA $8000,X			;$8000 is starting address of characters in rom
+  STA $1C00,X			;$1C00 is starting address of new character information location in ram
+  INC $30			;increment loop counter
 
   LDA #$FF
-  CMP $30
+  CMP $30			;check loop condition
   BNE characterLoop
 
-  
+  ;; We loop twice cause theres 512 bits of character information, and our
+  ;; loop counter only can go to 255
   LDA #$0
   STA $30
-characterLoop2
+characterLoop2			;this loop is same as above
   LDX $30
-  LDA $80FF,X
-  STA $1CFF,X
+  LDA $80FF,X			;$8000 + $FF = $80FF
+  STA $1CFF,X			;$1C00 + $FF = $1CFF
   INC $30
 
   LDA #$FF
   CMP $30
   BNE characterLoop2
 
-testskip
-  
-  LDX #$FF
+  ;now we change the character information pointer to our new ram location
+  LDX #$FF			
   STX 36869
+
+  ;; each character is stored as 8 bytes, with 1s indicating dark pixels.
+  ;; our player sprite (for now) will be:
+
+  ;; 	BINARY		|	HEX
+
+  ;; 	10000000	|	80
+  ;; 	10011000	|	98
+  ;; 	10111100	|	BC
+  ;; 	10111100	|	BC
+  ;; 	11111110	|	FE
+  ;; 	10111110	|	BE
+  ;; 	10111100	|	BC
+  ;; 	10100100	|	A4
+
+  ;;It might be hard to make out, but the ones in the 8x8 grid above
+
+  ;; the @ symbol is the first character in the character information section
+  ;; so bytes 7168 to 7175 correspond to it.
+  ;; Changing them to the values above will give us a little sprite whenever you type an @ symbol
+  LDA #$80
+  STA 7168
+  LDA #$98
+  STA 7169
+  LDA #$BC
+  STA 7170
+  STA 7171
+  LDA #$FE
+  STA 7172
+  LDA #$BE
+  STA 7173
+  LDA #$BC
+  STA 7174
+  LDA #$A4
+  STA 7175
 
   
   JSR clear
