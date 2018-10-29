@@ -12,7 +12,7 @@ start
 
 
   ;; This is the section where we copy the character values from rom to ram
-  LDA #0
+  LDA #$00
   STA $30
 characterLoop
   LDX $30			;loop counter
@@ -26,7 +26,7 @@ characterLoop
 
   ;; We loop twice cause theres 512 bits of character information, and our
   ;; loop counter only can go to 255
-  LDA #$0
+  LDA #$00
   STA $30
 characterLoop2			;this loop is same as above
   LDX $30
@@ -56,7 +56,7 @@ characterLoop2			;this loop is same as above
   ;; 	10111100	|	BC
   ;; 	10100100	|	A4
 
-  ;;It might be hard to make out, but the ones in the 8x8 grid above
+  ;;It might be hard to make out, but the ones in the 8x8 grid above make a little character dude
 
   ;; the @ symbol is the first character in the character information section
   ;; so bytes 7168 to 7175 correspond to it.
@@ -77,6 +77,37 @@ characterLoop2			;this loop is same as above
   LDA #$A4
   STA 7175
 
+
+  ;; 	BINARY		|	HEX
+
+  ;; 	00000000	|	00
+  ;; 	01001000	|	48
+  ;; 	01111001	|	79
+  ;; 	01111111	|	7F
+  ;; 	11111111	|	FF
+  ;; 	11111111	|	FF
+  ;; 	00101011	|	2B
+  ;; 	00101011	|	2A
+
+  ;; This grid represents a dog. Currently the > symbol is at ram address 7496-7503, so we'll chnage that to the dog
+  ;; (NOTE: I think the way I copied the character information from rom to ram didnt work properly. The > character is supposed to be at 7664 instead of 7496.... Something to deal with later)
+
+  LDA #$00
+  STA 7496
+  LDA #$48
+  STA 7497
+  LDA #$79
+  STA 7498
+  LDA #$7f
+  STA 7499
+  LDA #$FF
+  STA 7500
+  STA 7501
+  LDA #$2A
+  STA 7502
+  STA 7503
+  
+  
   
   JSR clear
   JSR black
@@ -182,7 +213,7 @@ eraseMonster
 
 drawMonster
   ; New location of the sprite ;
-  LDA #$28
+  LDA #$29
   LDY #$0
   STA ($e2),Y
   RTS
