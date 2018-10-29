@@ -1,6 +1,6 @@
   processor 6502
   org $1001
-
+  
   dc.w end
   dc.w 1234
 
@@ -9,13 +9,53 @@ end
   dc.w 0
 start
 
+
+  LDA #0
+  STA $30
+  
+characterLoop
+  LDX $30
+  LDA $8000,X
+  STA $1C00,X
+  INC $30
+
+  LDA #$FF
+  CMP $30
+  BNE characterLoop
+
+  
+  LDA #$0
+  STA $30
+characterLoop2
+  LDX $30
+  LDA $80FF,X
+  STA $1CFF,X
+  INC $30
+
+  LDA #$FF
+  CMP $30
+  BNE characterLoop2
+
+testskip
+  
+  LDX #$FF
+  STX 36869
+
+  
   JSR clear
   JSR black
   LDX #$09
   JSR loadMonsters
   JMP movementStart
   RTS
+	
 
+  LDA $1c			;This is setting the pointer to character information
+  STA $34			;to be in ram instead of ROM
+  STA $38
+
+
+	
 black
   LDX #$0
   STX 36879
