@@ -1,6 +1,6 @@
   processor 6502
   org $1001
-  
+
   dc.w end
   dc.w 1234
 
@@ -39,7 +39,7 @@ characterLoop2			;this loop is same as above
   BNE characterLoop2
 
   ;now we change the character information pointer to our new ram location
-  LDX #$FF			
+  LDX #$FF
   STX 36869
 
   ;; each character is stored as 8 bytes, with 1s indicating dark pixels.
@@ -106,23 +106,23 @@ characterLoop2			;this loop is same as above
   LDA #$2A
   STA 7502
   STA 7503
-  
-  
-  
+
+
+
   JSR clear
   JSR black
   LDX #$09
   JSR loadMonsters
   JMP movementStart
   RTS
-	
+
 
   LDA $1c			;This is setting the pointer to character information
   STA $34			;to be in ram instead of ROM
   STA $38
 
 
-	
+
 black
   LDX #$0
   STX 36879
@@ -134,7 +134,7 @@ loadMonsters
   LDA #$1E
   STA $e3
 
-  LDA #$1
+  LDA #$1   ; Collision flag for 1st monster
   STA $e0
 
   LDA #$28
@@ -228,6 +228,10 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$0
   LDY #$0 ; Just using y here for indirect addressing (i.e. to store A into $1EE6)
   STA ($f0),Y
+
+  LDA #$3
+  STA $d2 ; Player health (starts at 3)
+  ; CALL TO HP PIXEL ART DRAWING GOES HERE ;
 
 movement
   JSR wait  ; no teleporting
@@ -428,12 +432,25 @@ monsterHitCheck
 monsterHitCheck2
   LDA $f1
   CMP $e3
-  BEQ monsterHit
+  JSR monsterHit
+
+  RTS
 
 monsterHitEnd
 	RTS
 
 monsterHit
+  SEC
+  LDA $d2
+  SBC #$1
+  STA $d2
+  ; CALL TO HP PIXEL ART DRAWING UPDATE SHOULD BE HERE ;
+  LDA $d2
+  CMP #$0
+  BEQ playerDead  ; If HP is 0 the game ends
+  RTS
+
+playerDead
 	JSR clear
 	JMP gameEndScreen
 
@@ -456,6 +473,8 @@ gameEndScreen
 	STA $1EEA
 	JSR wait
 	JMP gameEndScreen
+
+
 
 newSprite
   ; New location of the sprite ;
