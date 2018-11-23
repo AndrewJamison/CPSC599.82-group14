@@ -251,12 +251,85 @@ continue
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ rightMove
+  BEQ goToRightMovement
 
   CMP #$1F ; Down arrow key
-  BEQ downMove
+  BEQ downMove1
+
+  CMP #$20															; here we're comparing if button pressed is space key
+  BEQ throwAxe														; if the button pressed was space key throw an axe
 
   jmp endMovement
+
+throwAxe
+  ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
+
+  ; once an axe is thrown. We need to check if it hit an enemy 	
+  
+  ;; draw an axe
+  LDA #0
+  STA $c6															; storing value into f3 to loop
+forwardAxe															;; draws 
+  INC $c6
+  JSR drawAxe
+
+  JSR checkAxeHitMonster1							; check if monster location is same as axe's location
+
+  LDA $c6
+  CMP #3
+  BMI forwardAxe
+  jmp endMovement
+
+checkAxeHitMonster1
+  ; check if move is legal
+  CLC
+  LDA $f0     ; load player address
+  ADC $c6     ; add the current offset of axe to it 
+  STA $c7     ; store this in f6 
+  LDA $f1
+  ADC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $e2 ; f6 - 23
+  BEQ checkLowAxe
+  RTS
+
+checkLowAxe
+  LDA $c8
+  CMP $e3
+  BEQ goToGameEndScreenFromAxe
+  rts
+
+
+goToRightMovement:
+	JMP rightMove
+;eraseAxe
+ ; LDA #$23    ; " " symbol
+  ;LDY #$c6
+  ;STA ($f0),Y
+ ; RTS
+
+drawAxe
+  ; New location of the sprite ;
+  LDA #$24															; currently just draws a $ sign
+  LDY $c6															; load what ever is stored at c3
+  STA ($f0),Y
+  ;JSR waitLongest
+  JSR wait
+  LDA #$20
+  LDY $c6
+  STA ($f0),Y
+  JSR waitLoopLong
+  
+  																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
+  																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
+  RTS
+
+goToMovement4
+  jmp movement
+downMove1:
+  jmp downMove
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
@@ -279,7 +352,7 @@ leftMove
   JSR beginMod
   LDA $f6
   CMP #2
-  BEQ movement
+  BEQ goToMovement4
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -303,6 +376,8 @@ leftMove
   JSR monsterHitCheck
   jmp newSprite
 
+goToGameEndScreenFromAxe
+  jmp gameEndScreen
 rightMove
   ; Delete old location of sprite ;
 
@@ -312,7 +387,7 @@ rightMove
   JSR beginMod
   LDA $f6
   CMP #1
-  BEQ movement
+  BEQ goToMovement4
 
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -502,7 +577,11 @@ waitloop
 waitLonger
 	LDA #0
 	STA 162
-
+waitLongest
+	LDA 162
+	CMP #24
+	BNE waitLongest
+	RTS
 waitLoopLong
 	LDA 162
 	CMP #12
@@ -533,3 +612,5 @@ checkLow
   CMP #0
   BNE mod
   rts
+
+throwArrow
