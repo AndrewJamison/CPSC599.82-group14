@@ -9,12 +9,119 @@ end
   dc.w 0
 start
 
+
+
+  ;; This is the section where we copy the character values from rom to ram
+  LDA #$00
+  STA $30
+characterLoop
+  LDX $30			;loop counter
+  LDA $8000,X			;$8000 is starting address of characters in rom
+  STA $1C00,X			;$1C00 is starting address of new character information location in ram
+  INC $30			;increment loop counter
+
+  LDA #$FF
+  CMP $30			;check loop condition
+  BNE characterLoop
+
+  ;; We loop twice cause theres 512 bits of character information, and our
+  ;; loop counter only can go to 255
+  LDA #$00
+  STA $30
+characterLoop2			;this loop is same as above
+  LDX $30
+  LDA $80FF,X			;$8000 + $FF = $80FF
+  STA $1CFF,X			;$1C00 + $FF = $1CFF
+  INC $30
+
+  LDA #$FF
+  CMP $30
+  BNE characterLoop2
+
+  ;now we change the character information pointer to our new ram location
+  LDX #$FF
+  STX 36869
+
+  ;; each character is stored as 8 bytes, with 1s indicating dark pixels.
+  ;; our player sprite (for now) will be:
+
+  ;; 	BINARY		|	HEX
+
+  ;; 	10000000	|	80
+  ;; 	10011000	|	98
+  ;; 	10111100	|	BC
+  ;; 	10111100	|	BC
+  ;; 	11111110	|	FE
+  ;; 	10111110	|	BE
+  ;; 	10111100	|	BC
+  ;; 	10100100	|	A4
+
+  ;;It might be hard to make out, but the ones in the 8x8 grid above make a little character dude
+
+  ;; the @ symbol is the first character in the character information section
+  ;; so bytes 7168 to 7175 correspond to it.
+  ;; Changing them to the values above will give us a little sprite whenever you type an @ symbol
+  LDA #$80
+  STA 7168
+  LDA #$98
+  STA 7169
+  LDA #$BC
+  STA 7170
+  STA 7171
+  LDA #$FE
+  STA 7172
+  LDA #$BE
+  STA 7173
+  LDA #$BC
+  STA 7174
+  LDA #$A4
+  STA 7175
+
+
+  ;; 	BINARY		|	HEX
+
+  ;; 	00000000	|	00
+  ;; 	01001000	|	48
+  ;; 	01111001	|	79
+  ;; 	01111111	|	7F
+  ;; 	11111111	|	FF
+  ;; 	11111111	|	FF
+  ;; 	00101011	|	2B
+  ;; 	00101011	|	2A
+
+  ;; This grid represents a dog. Currently the > symbol is at ram address 7496-7503, so we'll chnage that to the dog
+  ;; (NOTE: I think the way I copied the character information from rom to ram didnt work properly. The > character is supposed to be at 7664 instead of 7496.... Something to deal with later)
+
+  LDA #$00
+  STA 7496
+  LDA #$48
+  STA 7497
+  LDA #$79
+  STA 7498
+  LDA #$7f
+  STA 7499
+  LDA #$FF
+  STA 7500
+  STA 7501
+  LDA #$2A
+  STA 7502
+  STA 7503
+
+
+
   JSR clear
   JSR black
   LDX #$09
   JSR loadMonsters
   JMP movementStart
   RTS
+
+
+  LDA $1c			;This is setting the pointer to character information
+  STA $34			;to be in ram instead of ROM
+  STA $38
+
+
 
 black
   LDX #$0
@@ -27,7 +134,7 @@ loadMonsters
   LDA #$1E
   STA $e3
 
-  LDA #$1
+  LDA #$1   ; Collision flag for 1st monster
   STA $e0
 
   LDA #$28
@@ -39,7 +146,7 @@ monsterMovement
 	LDA $d0
 	CMP #$0
 	BEQ setMonsterFlag
-	
+
 	LDA #$0
 	STA $d0
 
@@ -60,7 +167,7 @@ monsterMovement
   BEQ monsterRightMove
 
   RTS
-	
+
 setMonsterFlag
 	LDA #$1
 	STA $d0
@@ -106,7 +213,7 @@ eraseMonster
 
 drawMonster
   ; New location of the sprite ;
-  LDA #$28 
+  LDA #$29
   LDY #$0
   STA ($e2),Y
   RTS
@@ -122,11 +229,15 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDY #$0 ; Just using y here for indirect addressing (i.e. to store A into $1EE6)
   STA ($f0),Y
 
+  LDA #$3
+  STA $d2 ; Player health (starts at 3)
+  ; CALL TO HP PIXEL ART DRAWING GOES HERE ;
+
 movement
   JSR wait  ; no teleporting
 
   JSR monsterMovement
-	
+
 continue
 
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
@@ -140,12 +251,85 @@ continue
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ rightMove
+  BEQ goToRightMovement
 
   CMP #$1F ; Down arrow key
-  BEQ downMove
+  BEQ downMove1
+
+  CMP #$20															; here we're comparing if button pressed is space key
+  BEQ throwAxe														; if the button pressed was space key throw an axe
 
   jmp endMovement
+
+throwAxe
+  ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
+
+  ; once an axe is thrown. We need to check if it hit an enemy 	
+  
+  ;; draw an axe
+  LDA #0
+  STA $c6															; storing value into f3 to loop
+forwardAxe															;; draws 
+  INC $c6
+  JSR drawAxe
+
+  JSR checkAxeHitMonster1							; check if monster location is same as axe's location
+
+  LDA $c6
+  CMP #3
+  BMI forwardAxe
+  jmp endMovement
+
+checkAxeHitMonster1
+  ; check if move is legal
+  CLC
+  LDA $f0     ; load player address
+  ADC $c6     ; add the current offset of axe to it 
+  STA $c7     ; store this in f6 
+  LDA $f1
+  ADC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $e2 ; f6 - 23
+  BEQ checkLowAxe
+  RTS
+
+checkLowAxe
+  LDA $c8
+  CMP $e3
+  BEQ goToGameEndScreenFromAxe
+  rts
+
+
+goToRightMovement:
+	JMP rightMove
+;eraseAxe
+ ; LDA #$23    ; " " symbol
+  ;LDY #$c6
+  ;STA ($f0),Y
+ ; RTS
+
+drawAxe
+  ; New location of the sprite ;
+  LDA #$24															; currently just draws a $ sign
+  LDY $c6															; load what ever is stored at c3
+  STA ($f0),Y
+  ;JSR waitLongest
+  JSR wait
+  LDA #$20
+  LDY $c6
+  STA ($f0),Y
+  JSR waitLoopLong
+  
+  																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
+  																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
+  RTS
+
+goToMovement4
+  jmp movement
+downMove1:
+  jmp downMove
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
@@ -162,13 +346,13 @@ loop
   jmp loop
 
 leftMove
-; $f0 = $f0 - 1 (one space left)  
+; $f0 = $f0 - 1 (one space left)
   LDA #22
-  STA $f4 
+  STA $f4
   JSR beginMod
   LDA $f6
   CMP #2
-  BEQ movement
+  BEQ goToMovement4
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -188,20 +372,22 @@ leftMove
   STA $f0
   LDA $f5
   STA $f1
-  
+
   JSR monsterHitCheck
   jmp newSprite
 
+goToGameEndScreenFromAxe
+  jmp gameEndScreen
 rightMove
   ; Delete old location of sprite ;
 
-  ; first check if right move is legal 
+  ; first check if right move is legal
   LDA #22
-  STA $f4 
+  STA $f4
   JSR beginMod
   LDA $f6
   CMP #1
-  BEQ movement
+  BEQ goToMovement4
 
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -221,7 +407,7 @@ rightMove
   STA $f0
   LDA $f5
   STA $f1
-	
+
   JSR monsterHitCheck
   jmp newSprite
 
@@ -233,8 +419,8 @@ goupMove
   JMP upMove
 
 downMove
-  ; check if move is legal 
-  CLC 
+  ; check if move is legal
+  CLC
   LDA $f0
   ADC #22
   STA $f6
@@ -273,22 +459,22 @@ isLegal
   STA $f0
   LDA $f5
   STA $f1
-  
+
   JSR monsterHitCheck
   jmp newSprite
 
 upMove
-  ; first check if move is legal 
-  SEC     
+  ; first check if move is legal
+  SEC
   LDA $f0
   SBC #22
   STA $f6
   LDA $f1
   SBC #00 ; f1 - 0 - (1- carry)
-  STA $f7 
+  STA $f7
 
   LDA $f7  ; if is below 1E then we can't go down
-  CMP #$1E 
+  CMP #$1E
   BMI gotomovement
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
@@ -309,21 +495,40 @@ upMove
   STA $f0
   LDA $f5
   STA $f1
-	
+
   JSR monsterHitCheck
   jmp newSprite
-  
+
 monsterHitCheck
 	LDA $f0
 	CMP $e2
-	BEQ	monsterHit
-	
+	BEQ	monsterHitCheck2
+  JMP monsterHitEnd
+monsterHitCheck2
+  LDA $f1
+  CMP $e3
+  JSR monsterHit
+
+  RTS
+
+monsterHitEnd
 	RTS
-	
+
 monsterHit
+  SEC
+  LDA $d2
+  SBC #$1
+  STA $d2
+  ; CALL TO HP PIXEL ART DRAWING UPDATE SHOULD BE HERE ;
+  LDA $d2
+  CMP #$0
+  BEQ playerDead  ; If HP is 0 the game ends
+  RTS
+
+playerDead
 	JSR clear
 	JMP gameEndScreen
-	
+
 gameEndScreen
 	LDA #$07
 	STA $1EE2
@@ -343,7 +548,9 @@ gameEndScreen
 	STA $1EEA
 	JSR wait
 	JMP gameEndScreen
-	
+
+
+
 newSprite
   ; New location of the sprite ;
   LDA #$0     ; "@" symbol
@@ -366,11 +573,15 @@ waitloop
   CMP #6
   BNE waitloop
   RTS
-	
+
 waitLonger
 	LDA #0
 	STA 162
-
+waitLongest
+	LDA 162
+	CMP #24
+	BNE waitLongest
+	RTS
 waitLoopLong
 	LDA 162
 	CMP #12
@@ -383,8 +594,8 @@ beginMod  ; this does value stored at (f1 to f0)%f4
   LDA $f1
   STA $f7
 
-mod 
-  SEC 
+mod
+  SEC
   LDA $f6
   SBC $f4
   STA $f6
@@ -401,3 +612,5 @@ checkLow
   CMP #0
   BNE mod
   rts
+
+throwArrow
