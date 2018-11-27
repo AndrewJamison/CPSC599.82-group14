@@ -109,6 +109,37 @@ characterLoop2			;this loop is same as above
 
 
 
+  LDA #$FF
+  STA 7580
+
+
+
+
+  
+  LDA #$00
+  STA 7456
+  STA 7457
+
+  LDA #$0C
+  STA 7458
+  LDA #$1F
+  STA 7459
+  LDA #$37
+  STA 7460
+  LDA #$67
+  STA 7461
+  LDA #$C0
+  STA 7462
+  LDA #$80
+  STA 7463
+
+
+
+
+  
+
+
+  
   JSR clear
   JSR black
   LDX #$09
