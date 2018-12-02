@@ -115,7 +115,7 @@ characterLoop2			;this loop is same as above
 
 
 
-  
+
   LDA #$00
   STA 7456
   STA 7457
@@ -136,10 +136,10 @@ characterLoop2			;this loop is same as above
 
 
 
-  
 
 
-  
+
+
   JSR clear
   JSR black
   LDX #$09
@@ -263,6 +263,17 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$3
   STA $d2 ; Player health (starts at 3)
   ; CALL TO HP PIXEL ART DRAWING GOES HERE ;
+  JSR displayHitpoints
+
+  ; Draw the boy initially ($1ECE) ;
+  LDA #$CE
+  STA $a0
+  LDA #$1E
+  STA $a1
+
+  LDA #$0 ; TODO: Change to boys sprite
+  LDY #$0
+  STA ($a0),Y
 
 movement
   JSR wait  ; no teleporting
@@ -295,12 +306,12 @@ continue
 throwAxe
   ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
 
-  ; once an axe is thrown. We need to check if it hit an enemy 	
-  
+  ; once an axe is thrown. We need to check if it hit an enemy
+
   ;; draw an axe
   LDA #0
   STA $c6															; storing value into f3 to loop
-forwardAxe															;; draws 
+forwardAxe															;; draws
   INC $c6
   JSR drawAxe
 
@@ -315,8 +326,8 @@ checkAxeHitMonster1
   ; check if move is legal
   CLC
   LDA $f0     ; load player address
-  ADC $c6     ; add the current offset of axe to it 
-  STA $c7     ; store this in f6 
+  ADC $c6     ; add the current offset of axe to it
+  STA $c7     ; store this in f6
   LDA $f1
   ADC #00   ; A - 0 - (1 - carry)
   STA $c8
@@ -352,7 +363,7 @@ drawAxe
   LDY $c6
   STA ($f0),Y
   JSR waitLoopLong
-  
+
   																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
   																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
   RTS
@@ -370,6 +381,7 @@ shiftDown
   BEQ goupMove
 
 endMovement
+  JSR displayHitpoints
   jmp movement ; Constant loop for movement (could be the main game loop?)
 
 loop
@@ -388,6 +400,8 @@ leftMove
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
+
+  JSR deleteBoy
 
   ; This chunk of code basically does $f0 - 1 but w/ carry magic
   LDA #1
@@ -423,6 +437,8 @@ rightMove
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
+
+  JSR deleteBoy
 
   ; $f0 = $f0 + 1 (one space right)
   LDA #1
@@ -476,6 +492,8 @@ isLegal
   LDY #$0
   STA ($f0),Y
 
+  JSR deleteBoy
+
   ; $f0 = $f0 + 22 (one space down)
   LDA #22
   STA $f2
@@ -511,6 +529,8 @@ upMove
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
+
+  JSR deleteBoy
 
   ; $f0 = $f0 - 22 (one space up)
   LDA #22
@@ -588,7 +608,33 @@ newSprite
   LDY #$0
   STA ($f0),Y
 
+  JSR drawBoy
+
+
   jmp movement
+
+deleteBoy
+  LDA #$21
+  LDY #$0
+  STA ($a0),Y
+  rts
+
+drawBoy
+  LDA #24
+  STA $f2
+  SEC
+  LDA $f0
+  SBC $f2
+  STA $a0
+  LDA $f1
+  SBC $f3
+  STA $a1
+
+  LDA #$1 ; TODO : Change to boys sprite
+  LDY #$0
+  STA ($a0),Y
+
+  RTS
 
 clear
   LDA #$93
@@ -645,3 +691,44 @@ checkLow
   rts
 
 throwArrow
+
+
+displayHitpoints
+  JSR clearHitPoints
+
+  LDA $d2
+  CMP #3
+  BEQ displayThreeHitpoints
+
+  CMP #2
+  BEQ displayTwoHitpoints
+
+  CMP #1
+  BEQ displayOneHitpoints
+
+  JMP clearHitPoints
+
+clearHitPoints
+  LDA #$20
+  STA $1E13
+  STA $1E14
+  STA $1E15
+  RTS
+
+displayThreeHitpoints
+  LDA #25
+  STA $1E13
+  STA $1E14
+  STA $1E15
+  RTS
+
+displayTwoHitpoints
+  LDA #25
+  STA $1E13
+  STA $1E14
+  RTS
+
+displayOneHitpoints
+  LDA #25
+  STA $1E13
+  RTS
