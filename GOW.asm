@@ -109,17 +109,11 @@ characterLoop2			;this loop is same as above
 
 
 
-  LDA #$FF
-  STA 7580
 
-
-
-
-  
+  ;; This section is adding an axe sprite
   LDA #$00
   STA 7456
   STA 7457
-
   LDA #$0C
   STA 7458
   LDA #$1F
@@ -133,7 +127,24 @@ characterLoop2			;this loop is same as above
   LDA #$80
   STA 7463
 
-
+  LDA #$66
+  STA 7464
+  LDA #$FF
+  STA 7465
+  STA 7466
+  STA 7467
+  LDA #$7E
+  STA 7468
+  LDA #$3C
+  STA 7469
+  LDA #$18
+  STA 7470
+  LDA #$00
+  STA 7471
+  
+  
+  
+  
 
 
   
