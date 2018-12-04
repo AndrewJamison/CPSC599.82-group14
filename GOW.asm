@@ -272,6 +272,7 @@ drawMonster
   LDA #$29
   LDY #$0
   STA ($e2),Y
+
   RTS
 
 
@@ -296,7 +297,7 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$1E
   STA $a1
 
-  LDA #$0 ; TODO: Change to boys sprite
+  LDA #$26
   LDY #$0
   STA ($a0),Y
 
@@ -304,6 +305,16 @@ movement
   JSR wait  ; no teleporting
 
   JSR monsterMovement
+
+  ; Draw the player ;
+  LDA #$0     ; Player sprite
+  LDY #$0
+  STA ($f0),Y
+
+  ; Draw the boy ;
+  LDA #$26     ; Player sprite
+  LDY #$0
+  STA ($a0),Y
 
 continue
 
@@ -639,10 +650,21 @@ newSprite
   jmp movement
 
 deleteBoy
-  LDA #$21
+  LDA #24
+  STA $f2
+  SEC
+  LDA $f0
+  SBC $f2
+  STA $a0
+  LDA $f1
+  SBC $f3
+  STA $a1
+
+  LDA #$20
   LDY #$0
   STA ($a0),Y
-  rts
+
+  RTS
 
 drawBoy
   LDA #24
@@ -655,7 +677,7 @@ drawBoy
   SBC $f3
   STA $a1
 
-  LDA #$1 ; TODO : Change to boys sprite
+  LDA #$26
   LDY #$0
   STA ($a0),Y
 
@@ -741,19 +763,19 @@ clearHitPoints
   RTS
 
 displayThreeHitpoints
-  LDA #25
+  LDA #$25
   STA $1E13
   STA $1E14
   STA $1E15
   RTS
 
 displayTwoHitpoints
-  LDA #25
+  LDA #$25
   STA $1E13
   STA $1E14
   RTS
 
 displayOneHitpoints
-  LDA #25
+  LDA #$25
   STA $1E13
   RTS
