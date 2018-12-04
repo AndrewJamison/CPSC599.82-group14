@@ -9,8 +9,6 @@ end
   dc.w 0
 start
 
-
-
   ;; This is the section where we copy the character values from rom to ram
   LDA #$00
   STA $30
@@ -110,7 +108,7 @@ characterLoop2			;this loop is same as above
 
 
 
-  ;; This section is adding an axe sprite
+  ;; This section is adding an axe sprite @ #$24
   LDA #$00
   STA 7456
   STA 7457
@@ -127,23 +125,24 @@ characterLoop2			;this loop is same as above
   LDA #$80
   STA 7463
 
-  ;; This section is adding a heart sprite
-  LDA #$66
+  ;; This section is adding a heart sprite @ #$25
+  LDA #$00
   STA 7464
-  LDA #$FF
+  LDA #$6C
   STA 7465
+  LDA #$FE
   STA 7466
   STA 7467
-  LDA #$7E
+  LDA #$7C
   STA 7468
-  LDA #$3C
+  LDA #$38
   STA 7469
-  LDA #$18
+  LDA #$10
   STA 7470
   LDA #$00
   STA 7471
 
-  ;; This section is adding a kid sprite
+  ;; This section is adding a kid sprite @ #$26
   LDA #$00
   STA 7472
   STA 7473
@@ -158,6 +157,11 @@ characterLoop2			;this loop is same as above
   LDA #$54
   STA 7479
 
+
+  LDA #$3
+  STA 38400
+  LDA #$FF
+  STA 7680
 
 
 
@@ -389,7 +393,8 @@ goToRightMovement:
  ; RTS
 
 drawAxe
-  ; New location of the sprite ;
+				; New location of the sprite ;
+
   LDA #$24															; currently just draws a $ sign
   LDY $c6															; load what ever is stored at c3
   STA ($f0),Y
