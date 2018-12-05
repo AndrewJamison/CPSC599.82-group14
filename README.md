@@ -2,10 +2,12 @@
 Repository for Fall 2018 retro games term project.
 
 MEMORY LOCATIONS:
+a6: Monster functions argument (0 = 1st monster, 1 = 2nd monster)
 c6-c8: used for axe 
 d2: Player health
 e0: 1st monster collision flag
 d0: 1st monster movement flag
+d3: Wait function argument
 d4: 2nd monster movement flag
 e2-e3: 1st monster location
 e4: 1st monster health
