@@ -115,7 +115,11 @@ characterLoop2			;this loop is same as above
 
 
 
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDA #$00
   STA 7456
   STA 7457
@@ -136,10 +140,17 @@ characterLoop2			;this loop is same as above
 
 
 
+<<<<<<< HEAD
 
 
 
 
+=======
+  
+
+
+  
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   JSR clear
   JSR black
   LDX #$09
@@ -300,16 +311,28 @@ goToRightMovement1
 throwAxe
   ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
 
+<<<<<<< HEAD
   ; once an axe is thrown. We need to check if it hit an enemy
 
+=======
+  ; once an axe is thrown. We need to check if it hit an enemy 	
+  
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   ;; draw an axe
 
 
   LDA #0
+<<<<<<< HEAD
   STA $c6
 
   ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction
   LDA $f8
+=======
+  STA $c6 
+
+  ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction 
+  LDA $f8 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   CMP #$1
   BEQ backwardAxe
   LDA $f8
@@ -320,7 +343,11 @@ throwAxe
   BEQ upAxe
 
 														; storing value into f3 to loop
+<<<<<<< HEAD
 forwardAxe															;; draws
+=======
+forwardAxe															;; draws 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   INC $c6
   JSR drawAxe
 
@@ -331,11 +358,19 @@ forwardAxe															;; draws
   BMI forwardAxe
   jmp endMovement
 
+<<<<<<< HEAD
 backwardAxe                              ;; draws
   ;CLC
   ;LDA #$ff
   ;ADC $c6                        ;; this is c6 + (-1)
   ;STA $c6
+=======
+backwardAxe                              ;; draws 
+  ;CLC
+  ;LDA #$ff
+  ;ADC $c6                        ;; this is c6 + (-1)
+  ;STA $c6 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   INC $c6
   JSR drawAxeNegative
 
@@ -349,7 +384,11 @@ backwardAxe                              ;; draws
 shiftDown1:
   JSR shiftDown
 
+<<<<<<< HEAD
 downAxe                              ;; draws
+=======
+downAxe                              ;; draws 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDA #21
   ADC $c6
   STA $c6
@@ -370,7 +409,11 @@ upAxe
   STA $c6
   JSR drawAxeNegative
 
+<<<<<<< HEAD
   JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's location
+=======
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   INC $c6
 
   LDA $c6
@@ -382,8 +425,13 @@ checkAxeHitMonster1
   ; check if move is legal
   CLC
   LDA $f0     ; load player address
+<<<<<<< HEAD
   ADC $c6     ; add the current offset of axe to it
   STA $c7     ; store this in f6
+=======
+  ADC $c6     ; add the current offset of axe to it 
+  STA $c7     ; store this in f6 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDA $f1
   ADC #00   ; A - 0 - (1 - carry)
   STA $c8
@@ -397,8 +445,13 @@ checkAxeHitMonsterNegative
   ; check if move is legal
   SEC
   LDA $f0     ; load player address
+<<<<<<< HEAD
   SBC $c6     ; add the current offset of axe to it
   STA $c7     ; store this in f6
+=======
+  SBC $c6     ; add the current offset of axe to it 
+  STA $c7     ; store this in f6 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDA $f1
   SBC #00   ; A - 0 - (1 - carry)
   STA $c8
@@ -441,6 +494,7 @@ drawAxeNegative
   STA ($f6),Y
   JSR wait
   ; here we are trying to erase the axe sprite
+<<<<<<< HEAD
 
   SEC
   LDA $f0
@@ -449,6 +503,9 @@ drawAxeNegative
   LDA $f1
   SBC #00 ; f1 - 0 - (1- carry)
   STA $f7
+=======
+  
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDY #0
   LDA #$20
   STA ($f6),Y
@@ -470,7 +527,11 @@ drawAxe
   LDY $c6
   STA ($f0),Y
   JSR waitLoopLong
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
   																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
   RTS
@@ -483,7 +544,11 @@ shiftDown
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Left arrow key
+<<<<<<< HEAD
   BEQ leftMove ;
+=======
+  BEQ leftMove ; 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   CMP #$1F ; Up arrow key
   BEQ goupMove1
 
@@ -502,7 +567,11 @@ storeLeft
 
 leftMove
   ; first we should check if the last movement direction was left
+<<<<<<< HEAD
   ; if the last direction we moved was left, then continue to move left,
+=======
+  ; if the last direction we moved was left, then continue to move left, 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   ; otherwise, update our new direction we're facing (f8) to left, and return to main game loop
 
   LDA $f8
@@ -601,7 +670,11 @@ gotomovement
 
 goupMove
   JMP upMove
+<<<<<<< HEAD
   ; see if we just moved down
+=======
+  ; see if we just moved down 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
 
 
 downMove
@@ -659,7 +732,11 @@ storeUp
   JSR movement
 upMove
   ; check if the last direction pressed was up
+<<<<<<< HEAD
   ; if it wasn't, then change direction to up, but don't go up
+=======
+  ; if it wasn't, then change direction to up, but don't go up 
+>>>>>>> aaf9462a350d1b4433920dc67d4cbdfd67e87494
   LDA $f8
   CMP #4
   BNE storeUp
