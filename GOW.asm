@@ -277,29 +277,49 @@ continue
   LDA $028D
   AND #$1
   CMP #$1
-  BEQ shiftDown
+  BEQ shiftDown1
 
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ goToRightMovement
+  BEQ goToRightMovement1
 
   CMP #$1F ; Down arrow key
-  BEQ downMove1
+  BEQ downMoveJSR
 
   CMP #$20															; here we're comparing if button pressed is space key
   BEQ throwAxe														; if the button pressed was space key throw an axe
 
   jmp endMovement
 
+downMoveJSR
+  JSR downMove1
+
+goToRightMovement1
+  JSR goToRightMovement
 throwAxe
   ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
 
   ; once an axe is thrown. We need to check if it hit an enemy 	
   
   ;; draw an axe
+
+
   LDA #0
-  STA $c6															; storing value into f3 to loop
+  STA $c6 
+
+  ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction 
+  LDA $f8 
+  CMP #$1
+  BEQ backwardAxe
+  LDA $f8
+  CMP #3
+  BEQ downAxe
+  LDA $f8
+  CMP #4
+  BEQ upAxe
+
+														; storing value into f3 to loop
 forwardAxe															;; draws 
   INC $c6
   JSR drawAxe
@@ -309,6 +329,53 @@ forwardAxe															;; draws
   LDA $c6
   CMP #3
   BMI forwardAxe
+  jmp endMovement
+
+backwardAxe                              ;; draws 
+  ;CLC
+  ;LDA #$ff
+  ;ADC $c6                        ;; this is c6 + (-1)
+  ;STA $c6 
+  INC $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+
+  LDA $c6
+  CMP #3
+  BMI backwardAxe
+  jmp endMovement
+
+shiftDown1:
+  JSR shiftDown
+
+downAxe                              ;; draws 
+  LDA #21
+  ADC $c6
+  STA $c6
+  JSR drawAxe
+  ;INC $c6
+
+  JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
+  INC $c6
+
+  LDA $c6
+  CMP #66
+  BMI downAxe
+  jmp endMovement
+
+upAxe
+  LDA #21
+  ADC $c6
+  STA $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+  INC $c6
+
+  LDA $c6
+  CMP #66
+  BMI upAxe
   jmp endMovement
 
 checkAxeHitMonster1
@@ -322,16 +389,36 @@ checkAxeHitMonster1
   STA $c8
 
   LDA $c7
-  CMP $e2 ; f6 - 23
+  CMP $e2     ; f6 - 23
+  BEQ checkLowAxe
+  RTS
+
+checkAxeHitMonsterNegative
+  ; check if move is legal
+  SEC
+  LDA $f0     ; load player address
+  SBC $c6     ; add the current offset of axe to it 
+  STA $c7     ; store this in f6 
+  LDA $f1
+  SBC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $e2     ; f6 - 23
   BEQ checkLowAxe
   RTS
 
 checkLowAxe
   LDA $c8
   CMP $e3
-  BEQ goToGameEndScreenFromAxe
+  BEQ goToGameEndScreenFromAxe3
   rts
 
+goToGameEndScreenFromAxe3
+  jsr gameEndScreen
+
+downMove1:
+  jmp downMove
 
 goToRightMovement:
 	JMP rightMove
@@ -341,10 +428,34 @@ goToRightMovement:
   ;STA ($f0),Y
  ; RTS
 
+drawAxeNegative
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
+  LDY #0
+  LDA #$24
+  STA ($f6),Y
+  JSR wait
+  ; here we are trying to erase the axe sprite
+  
+  LDY #0
+  LDA #$20
+  STA ($f6),Y
+
+  JSR waitLoopLong
+
+  RTS
+
+
 drawAxe
   ; New location of the sprite ;
   LDA #$24															; currently just draws a $ sign
   LDY $c6															; load what ever is stored at c3
+  CLC
   STA ($f0),Y
   ;JSR waitLongest
   JSR wait
@@ -359,15 +470,15 @@ drawAxe
 
 goToMovement4
   jmp movement
-downMove1:
-  jmp downMove
+
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
+
   CMP #$17  ; Left arrow key
-  BEQ leftMove
+  BEQ leftMove ; 
   CMP #$1F ; Up arrow key
-  BEQ goupMove
+  BEQ goupMove1
 
 endMovement
   jmp movement ; Constant loop for movement (could be the main game loop?)
@@ -376,7 +487,22 @@ loop
   nop
   jmp loop
 
+storeLeft
+  LDA #1                                                                                                    ;;;;;;;;;;;;;;;;
+  STA $f8
+  JSR movement
+  ;JSR goToGameEndScreenFromAxe
+
 leftMove
+  ; first we should check if the last movement direction was left
+  ; if the last direction we moved was left, then continue to move left, 
+  ; otherwise, update our new direction we're facing (f8) to left, and return to main game loop
+
+  LDA $f8
+  CMP #$1
+  BNE storeLeft
+
+
 ; $f0 = $f0 - 1 (one space left)
   LDA #22
   STA $f4
@@ -409,7 +535,21 @@ leftMove
 
 goToGameEndScreenFromAxe
   jmp gameEndScreen
+
+storeRight
+  LDA #2
+  STA $f8
+  JSR movement
+
+goupMove1
+  JMP goupMove
+
 rightMove
+
+  ;; check if right was last pressed
+  LDA $f8
+  CMP #2
+  BNE storeRight
   ; Delete old location of sprite ;
 
   ; first check if right move is legal
@@ -419,6 +559,8 @@ rightMove
   LDA $f6
   CMP #1
   BEQ goToMovement4
+
+
 
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -442,15 +584,25 @@ rightMove
   JSR monsterHitCheck
   jmp newSprite
 
+storeDown
+  LDA #3
+  STA $f8
+  JSR movement
 
 gotomovement
   jmp movement
 
 goupMove
   JMP upMove
+  ; see if we just moved down 
+
 
 downMove
   ; check if move is legal
+  LDA $f8
+  CMP #3
+  BNE storeDown
+
   CLC
   LDA $f0
   ADC #22
@@ -494,7 +646,17 @@ isLegal
   JSR monsterHitCheck
   jmp newSprite
 
+storeUp
+  LDA #4
+  STA $f8
+  JSR movement
 upMove
+  ; check if the last direction pressed was up
+  ; if it wasn't, then change direction to up, but don't go up 
+  LDA $f8
+  CMP #4
+  BNE storeUp
+
   ; first check if move is legal
   SEC
   LDA $f0
