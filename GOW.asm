@@ -371,8 +371,7 @@ throwAxe
   BEQ upAxe
 
 														; storing value into f3 to loop
-forwardAxe															;; draws 
-  STA $c6															; storing value into f3 to loop
+
 forwardAxe															;; draws
   INC $c6
   JSR drawAxe
