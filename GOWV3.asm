@@ -9,6 +9,8 @@ end
   dc.w 0
 start
 
+
+
   ;; This is the section where we copy the character values from rom to ram
   LDA #$00
   STA $30
@@ -107,11 +109,17 @@ characterLoop2			;this loop is same as above
 
 
 
+  LDA #$FF
+  STA 7580
 
-  ;; This section is adding an axe sprite @ #$24
+
+
+
+
   LDA #$00
   STA 7456
   STA 7457
+
   LDA #$0C
   STA 7458
   LDA #$1F
@@ -125,90 +133,6 @@ characterLoop2			;this loop is same as above
   LDA #$80
   STA 7463
 
-  ;; This section is adding a heart sprite @ #$25
-  LDA #$00
-  STA 7464
-  LDA #$6C
-  STA 7465
-  LDA #$FE
-  STA 7466
-  STA 7467
-  LDA #$7C
-  STA 7468
-  LDA #$38
-  STA 7469
-  LDA #$10
-  STA 7470
-  LDA #$00
-  STA 7471
-
-  ;; This section is adding a kid sprite @ #$26
-  LDA #$00
-  STA 7472
-  STA 7473
-  STA 7474
-  LDA #$08
-  STA 7475
-  LDA #$5C
-  STA 7476
-  STA 7478
-  LDA #$7E
-  STA 7477
-  LDA #$54
-  STA 7479
-
-  ;; This section is adding a skeleton sprite @ #$27
-  ;; 	BINARY		|	HEX
-
-  ;; 	00011100	|	1C
-  ;; 	00100010	|	22
-  ;; 	01010101	|	55
-  ;; 	01000001	|	41
-  ;; 	01001001	|	49
-  ;; 	01000001	|	41
-  ;; 	01010101	|	55
-  ;; 	00111110	|	3E
-
-  LDA #$1C
-  STA 7480
-  LDA #$22
-  STA 7481
-  LDA #$55
-  STA 7482
-  LDA #$41
-  STA 7483
-  LDA #$49
-  STA 7484
-  LDA #$41
-  STA 7485
-  LDA #$55
-  STA 7486
-  LDA #$3E
-  STA 7487
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  LDA #$3
-  STA 38400
-  LDA #$FF
-  STA 7680
 
 
 
@@ -236,7 +160,6 @@ black
   RTS
 
 loadMonsters
-  ; MONSTER ONE ;
   LDA #$D4  ; $e2-e3 = #$1ED4 < - 1st monster starting location
   STA $e2
   LDA #$1E
@@ -245,104 +168,58 @@ loadMonsters
   LDA #$1   ; Collision flag for 1st monster
   STA $e0
 
-  LDA #3   ; Monster 1 health (starts at 3)
-  STA $e4
-
-  LDA #$29
+  LDA #$28
   LDY #$0
   STA ($e2),Y
-  ; END MONSTER ONE ;
-
-  ; MONSTER TWO ;
-  LDA #$B6
-  STA $12
-  LDA #$1E
-  STA $13
-
-  LDA #$1
-  STA $11
-
-  LDA #3
-  STA $14
-
-  LDA #$27
-  LDY #$0
-  STA ($12),Y
-  ; END MONSTER TWO ;
-
   RTS
 
 monsterMovement
+	LDA $d0
+	CMP #$0
+	BEQ setMonsterFlag
 
-  JSR setMonsterFlag
+	LDA #$0
+	STA $d0
 
-  LDA $c2
-  CMP $b7
-  BEQ case1
+  LDA $e2
+  CMP #$D5
+  BEQ leftMoveBorder
 
-  LDA $c2
-  CMP $b6
-  BEQ case2
+  LDA $e2
+  CMP #$D0
+  BEQ rightMoveBorder
 
-  LDA $c1
+  LDA $e0
   CMP #$1
-  BEQ case3
+  BEQ monsterLeftMove
 
-  LDA $c1
+  LDA $e0
   CMP #$0
-  BEQ case4
-
-case1
-  JSR leftMoveBorder
-  JMP monsterMoveCleanup
-
-case2
-  JSR rightMoveBorder
-  JMP monsterMoveCleanup
-
-case3
-  JSR monsterLeftMove
-  JMP monsterMoveCleanup
-
-case4
-
-  JSR monsterRightMove
-  JMP monsterMoveCleanup
-
-monsterMoveCleanup
+  BEQ monsterRightMove
 
   RTS
 
 setMonsterFlag
-  LDA $c0
-  CMP #0
-  BEQ monsterFlagZero ; Check if the flag is 0; if so set it to one and skip monster movement
-
-  LDA #0  ; Otherwise if the flag is 0 continue with movement
-  STA $c0
-  RTS
-
-monsterFlagZero
 	LDA #$1
-	STA $c0
-	JMP monsterMoveCleanup
+	STA $d0
+	JMP continue
 
 monsterLeftMove
   JSR eraseMonster
-  LDA $c2
+  LDA $e2
   SEC
   SBC #$1
-  STA $c2
+  STA $e2
   JSR monsterHitCheck
   JSR drawMonster
   RTS
 
 monsterRightMove
   JSR eraseMonster
-  LDA $c2
+  LDA $e2
   CLC
   ADC #$1
-  STA $c2
+  STA $e2
   JSR monsterHitCheck
   JSR drawMonster
   RTS
@@ -350,44 +227,27 @@ monsterRightMove
 leftMoveBorder
   JSR monsterLeftMove
   LDA #$1
-  STA $c1
+  STA $e0
   RTS
 
 rightMoveBorder
   JSR monsterRightMove
   LDA #$0
-  STA $c1
+  STA $e0
   RTS
 
 eraseMonster
   LDA #$20    ; " " symbol
   LDY #$0
-  STA ($c2),Y
+  STA ($e2),Y
   RTS
 
 drawMonster
-  ; Check to see which monster it is we want to draw (different sprites) ;
-  LDA $20 ;$20 contains the current monster (0 = monster 1, 1 = monster 2)
-  CMP #$0
-  BEQ drawMonster1
-
-  CMP #$1
-  BEQ drawMonster2
-
-drawMonster1
   ; New location of the sprite ;
   LDA #$29
   LDY #$0
-  STA ($c2),Y
+  STA ($e2),Y
   RTS
-drawMonster2
-  ; New location of the sprite ;
-  LDA #$27
-  LDY #$0
-  STA ($c2),Y
-  RTS
-
-
 
 
 movementStart ; Instantiate coordinates($f0) (little endian!)
@@ -403,96 +263,11 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$3
   STA $d2 ; Player health (starts at 3)
   ; CALL TO HP PIXEL ART DRAWING GOES HERE ;
-  JSR displayHitpoints
-
-  ; Draw the boy initially ($1ECE) ;
-  LDA #$CE
-  STA $a0
-  LDA #$1E
-  STA $a1
-
-  LDA #$26
-  LDY #$0
-  STA ($a0),Y
 
 movement
   JSR wait  ; no teleporting
 
-  LDA $e6 ; Check to see if monster 1 is dead; if so don't draw it
-  CMP #0
-  BEQ monster1Dead
-
-  ;Monster One Input;
-  LDA $d0  ; Movement flag
-  STA $c0
-  LDA $e0  ; Collision flag
-  STA $c1
-  LDA $e2  ; Location
-  STA $c2
-  LDA $e3
-  STA $c3
-  LDA $e4  ; Health
-  STA $c4
-  LDA #$D0
-  STA $b6 ; Left border
-  LDA #$D5
-  STA $b7 ; Right border
-  LDA #0
-  STA $20 ; Current monster flag (0 = monster 1)
-
   JSR monsterMovement
-
-  ;Load the output back into Monster One;
-  LDA $c0  ; Movement flag
-  STA $d0
-  LDA $c1  ; Collision flag
-  STA $e0
-  LDA $c2  ; Location
-  STA $e2
-  LDA $c4  ; Health
-  STA $e4
-
-  ;Monster Two Input;
-  LDA $00  ; Movement flag
-  STA $c0
-  LDA $11  ; Collision flag
-  STA $c1
-  LDA $12  ; Location
-  STA $c2
-  LDA $13
-  STA $c3
-  LDA $14  ; Health
-  STA $c4
-  LDA #$B1
-  STA $b6 ; Left border
-  LDA #$B8
-  STA $b7 ; Right border
-  LDA #1
-  STA $20 ; Current monster flag (1 = monster 2)
-
-  JSR monsterMovement
-
-  ;Load the output back into Monster Two;
-  LDA $c0  ; Movement flag
-  STA $10
-  LDA $c1  ; Collision flag
-  STA $11
-  LDA $c2  ; Location
-  STA $12
-  LDA $c4  ; Health
-  STA $14
-
-
-monster1Dead:
-  ; Draw the player ;
-  LDA #$0     ; Player sprite
-  LDY #$0
-  STA ($f0),Y
-
-  ; Draw the boy ;
-  LDA #$26     ; Player sprite
-  LDY #$0
-  STA ($a0),Y
 
 continue
 
@@ -502,29 +277,49 @@ continue
   LDA $028D
   AND #$1
   CMP #$1
-  BEQ shiftDown
+  BEQ shiftDown1
 
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ goToRightMovement
+  BEQ goToRightMovement1
 
   CMP #$1F ; Down arrow key
-  BEQ downMove1
+  BEQ downMoveJSR
 
   CMP #$20															; here we're comparing if button pressed is space key
   BEQ throwAxe														; if the button pressed was space key throw an axe
 
   jmp endMovement
 
+downMoveJSR
+  JSR downMove1
+
+goToRightMovement1
+  JSR goToRightMovement
 throwAxe
   ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
 
   ; once an axe is thrown. We need to check if it hit an enemy
 
   ;; draw an axe
+
+
   LDA #0
-  STA $c6															; storing value into f3 to loop
+  STA $c6
+
+  ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction
+  LDA $f8
+  CMP #$1
+  BEQ backwardAxe
+  LDA $f8
+  CMP #3
+  BEQ downAxe
+  LDA $f8
+  CMP #4
+  BEQ upAxe
+
+														; storing value into f3 to loop
 forwardAxe															;; draws
   INC $c6
   JSR drawAxe
@@ -534,6 +329,53 @@ forwardAxe															;; draws
   LDA $c6
   CMP #3
   BMI forwardAxe
+  jmp endMovement
+
+backwardAxe                              ;; draws
+  ;CLC
+  ;LDA #$ff
+  ;ADC $c6                        ;; this is c6 + (-1)
+  ;STA $c6
+  INC $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+
+  LDA $c6
+  CMP #3
+  BMI backwardAxe
+  jmp endMovement
+
+shiftDown1:
+  JSR shiftDown
+
+downAxe                              ;; draws
+  LDA #21
+  ADC $c6
+  STA $c6
+  JSR drawAxe
+  ;INC $c6
+
+  JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
+  INC $c6
+
+  LDA $c6
+  CMP #66
+  BMI downAxe
+  jmp endMovement
+
+upAxe
+  LDA #21
+  ADC $c6
+  STA $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's location
+  INC $c6
+
+  LDA $c6
+  CMP #66
+  BMI upAxe
   jmp endMovement
 
 checkAxeHitMonster1
@@ -547,25 +389,36 @@ checkAxeHitMonster1
   STA $c8
 
   LDA $c7
-  CMP $e2 ; f6 - 23
+  CMP $e2     ; f6 - 23
+  BEQ checkLowAxe
+  RTS
+
+checkAxeHitMonsterNegative
+  ; check if move is legal
+  SEC
+  LDA $f0     ; load player address
+  SBC $c6     ; add the current offset of axe to it
+  STA $c7     ; store this in f6
+  LDA $f1
+  SBC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $e2     ; f6 - 23
   BEQ checkLowAxe
   RTS
 
 checkLowAxe
   LDA $c8
   CMP $e3
-  JSR monsterHitByAxe
+  BEQ goToGameEndScreenFromAxe3
   rts
 
-monsterHitByAxe ;Reduce monster health by 1; If health is 0 after the subtraction then set the monster alive flag to 0
-  LDA $e4
-  SEC
-  SBC #1
-  CMP #0
-  BEQ monsterDead
-  STA $e4
-  RTS
+goToGameEndScreenFromAxe3
+  jsr gameEndScreen
 
+downMove1:
+  jmp downMove
 
 goToRightMovement:
 	JMP rightMove
@@ -575,11 +428,41 @@ goToRightMovement:
   ;STA ($f0),Y
  ; RTS
 
-drawAxe
-				; New location of the sprite ;
+drawAxeNegative
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
+  LDY #0
+  LDA #$24
+  STA ($f6),Y
+  JSR wait
+  ; here we are trying to erase the axe sprite
 
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
+  LDY #0
+  LDA #$20
+  STA ($f6),Y
+
+  JSR waitLoopLong
+
+  RTS
+
+
+drawAxe
+  ; New location of the sprite ;
   LDA #$24															; currently just draws a $ sign
   LDY $c6															; load what ever is stored at c3
+  CLC
   STA ($f0),Y
   ;JSR waitLongest
   JSR wait
@@ -594,28 +477,39 @@ drawAxe
 
 goToMovement4
   jmp movement
-downMove1:
-  jmp downMove
+
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
+
   CMP #$17  ; Left arrow key
-  BEQ leftMove
+  BEQ leftMove ;
   CMP #$1F ; Up arrow key
   BEQ goupMove1
 
-goupMove1
-  JMP goupMove
-
 endMovement
-  JSR displayHitpoints
   jmp movement ; Constant loop for movement (could be the main game loop?)
 
 loop
   nop
   jmp loop
 
+storeLeft
+  LDA #1                                                                                                    ;;;;;;;;;;;;;;;;
+  STA $f8
+  JSR movement
+  ;JSR goToGameEndScreenFromAxe
+
 leftMove
+  ; first we should check if the last movement direction was left
+  ; if the last direction we moved was left, then continue to move left,
+  ; otherwise, update our new direction we're facing (f8) to left, and return to main game loop
+
+  LDA $f8
+  CMP #$1
+  BNE storeLeft
+
+
 ; $f0 = $f0 - 1 (one space left)
   LDA #22
   STA $f4
@@ -627,8 +521,6 @@ leftMove
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
-
-  JSR deleteBoy
 
   ; This chunk of code basically does $f0 - 1 but w/ carry magic
   LDA #1
@@ -648,19 +540,23 @@ leftMove
   JSR monsterHitCheck
   jmp newSprite
 
-monsterDead
-  LDA #0
-  STA $e4
-  STA $e6
+goToGameEndScreenFromAxe
+  jmp gameEndScreen
 
-  ;Delete the monster;
-  LDA #$20
-  STA $e2
-  RTS
+storeRight
+  LDA #2
+  STA $f8
+  JSR movement
 
-
+goupMove1
+  JMP goupMove
 
 rightMove
+
+  ;; check if right was last pressed
+  LDA $f8
+  CMP #2
+  BNE storeRight
   ; Delete old location of sprite ;
 
   ; first check if right move is legal
@@ -671,11 +567,11 @@ rightMove
   CMP #1
   BEQ goToMovement4
 
+
+
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
-
-  JSR deleteBoy
 
   ; $f0 = $f0 + 1 (one space right)
   LDA #1
@@ -695,15 +591,25 @@ rightMove
   JSR monsterHitCheck
   jmp newSprite
 
+storeDown
+  LDA #3
+  STA $f8
+  JSR movement
 
 gotomovement
   jmp movement
 
 goupMove
   JMP upMove
+  ; see if we just moved down
+
 
 downMove
   ; check if move is legal
+  LDA $f8
+  CMP #3
+  BNE storeDown
+
   CLC
   LDA $f0
   ADC #22
@@ -729,8 +635,6 @@ isLegal
   LDY #$0
   STA ($f0),Y
 
-  JSR deleteBoy
-
   ; $f0 = $f0 + 22 (one space down)
   LDA #22
   STA $f2
@@ -749,7 +653,17 @@ isLegal
   JSR monsterHitCheck
   jmp newSprite
 
+storeUp
+  LDA #4
+  STA $f8
+  JSR movement
 upMove
+  ; check if the last direction pressed was up
+  ; if it wasn't, then change direction to up, but don't go up
+  LDA $f8
+  CMP #4
+  BNE storeUp
+
   ; first check if move is legal
   SEC
   LDA $f0
@@ -766,8 +680,6 @@ upMove
   LDA #$20    ; " " symbol (space)
   LDY #$0
   STA ($f0),Y
-
-  JSR deleteBoy
 
   ; $f0 = $f0 - 22 (one space up)
   LDA #22
@@ -789,12 +701,12 @@ upMove
 
 monsterHitCheck
 	LDA $f0
-	CMP $c2
+	CMP $e2
 	BEQ	monsterHitCheck2
   JMP monsterHitEnd
 monsterHitCheck2
   LDA $f1
-  CMP $c3
+  CMP $e3
   JSR monsterHit
 
   RTS
@@ -845,44 +757,7 @@ newSprite
   LDY #$0
   STA ($f0),Y
 
-  JSR drawBoy
-
-
   jmp movement
-
-deleteBoy
-  LDA #24
-  STA $f2
-  SEC
-  LDA $f0
-  SBC $f2
-  STA $a0
-  LDA $f1
-  SBC $f3
-  STA $a1
-
-  LDA #$20
-  LDY #$0
-  STA ($a0),Y
-
-  RTS
-
-drawBoy
-  LDA #24
-  STA $f2
-  SEC
-  LDA $f0
-  SBC $f2
-  STA $a0
-  LDA $f1
-  SBC $f3
-  STA $a1
-
-  LDA #$26
-  LDY #$0
-  STA ($a0),Y
-
-  RTS
 
 clear
   LDA #$93
@@ -939,44 +814,3 @@ checkLow
   rts
 
 throwArrow
-
-
-displayHitpoints
-  JSR clearHitPoints
-
-  LDA $d2
-  CMP #3
-  BEQ displayThreeHitpoints
-
-  CMP #2
-  BEQ displayTwoHitpoints
-
-  CMP #1
-  BEQ displayOneHitpoints
-
-  JMP clearHitPoints
-
-clearHitPoints
-  LDA #$20
-  STA $1E13
-  STA $1E14
-  STA $1E15
-  RTS
-
-displayThreeHitpoints
-  LDA #$25
-  STA $1E13
-  STA $1E14
-  STA $1E15
-  RTS
-
-displayTwoHitpoints
-  LDA #$25
-  STA $1E13
-  STA $1E14
-  RTS
-
-displayOneHitpoints
-  LDA #$25
-  STA $1E13
-  RTS
