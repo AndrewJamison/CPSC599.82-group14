@@ -19,6 +19,7 @@ f7: Player health
 f8: Last player direction 
 
 
-c0: Monster flag argument
+c0: Monster movement flag argument
+c1: Monster collision flag argument
 c2: Monster location argument
 c4: Monster health argument
