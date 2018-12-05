@@ -25,3 +25,15 @@ c2: Monster location argument
 c4: Monster health argument
 b6: Monster left border
 b7: Monster right border
+
+20: Current monster being looked at
+
+
+
+==Monster Two==
+10: movement flag
+11: collision flag
+12: location
+14: health
+16: left border
+17: right border
