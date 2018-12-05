@@ -442,6 +442,14 @@ drawAxeNegative
   JSR wait
   ; here we are trying to erase the axe sprite
   
+
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
   LDY #0
   LDA #$20
   STA ($f6),Y
