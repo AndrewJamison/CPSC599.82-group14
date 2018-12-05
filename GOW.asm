@@ -415,6 +415,12 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDY #$0
   STA ($a0),Y
 
+  LDA #0
+  STA $32
+
+  LDA #2
+  STA $f8
+
 movement
   JSR wait  ; no teleporting
 
@@ -496,6 +502,15 @@ monster1Dead:
 
 continue
 
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #0
+  BEQ axeNotBeingThrown
+
+  JMP axeBeingThrown
+
+
+axeNotBeingThrown
+
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
   ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
   ; being pressed or not)                                                                      ;
@@ -507,25 +522,42 @@ continue
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ goToRightMovement1
+  BEQ goToRightMovement2
 
   CMP #$1F ; Down arrow key
-  BEQ downMoveJSR
+  BEQ downMoveJSR1
 
   CMP #$20															; here we're comparing if button pressed is space key
-  BEQ throwAxe														; if the button pressed was space key throw an axe
+  BEQ throwAxe												; if the button pressed was space key throw an axe
+
+  JMP endMovement
+
+
+axeBeingThrown
+  ; Otherwise if an axe is currently being thrown then we want to continue the throw loop
+  ; Check to see the original direction the player was facing when they threw the axe and throw it based on that
+  LDA $f8
+  CMP #2
+  BEQ forwardAxe
+  LDA $f8
+  CMP #1
+  BEQ backwardAxe1
+  LDA $f8
+  CMP #3
+  BEQ downAxe
+  LDA $f8
+  CMP #4
+  BEQ upAxe1
 
   jmp endMovement
-
-downMoveJSR
-  JSR downMove
-
-goToRightMovement1
-  JSR goToRightMovement
 throwAxe
-  ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
+  ; Here we need to throw an axe
 
   ; once an axe is thrown. We need to check if it hit an enemy
+
+  ; Set the loop counter for the axe to start at 3:
+  LDA #5
+  STA $32   ; $32 is the axe loop counter
 
   ;; draw an axe
 
@@ -542,67 +574,137 @@ throwAxe
   BEQ downAxe
   LDA $f8
   CMP #4
-  BEQ upAxe
+  BEQ upAxe1
 
 														; storing value into f3 to loop
 
 forwardAxe															;; draws
+  LDA $32
+  CMP #5
+  BEQ skipDeleteForward
+  JSR deleteAxe
+
+skipDeleteForward
   INC $c6
   JSR drawAxe
 
   JSR checkAxeHitMonster1							; check if monster location is same as axe's location
 
-  LDA $c6
-  CMP #3
-  BMI forwardAxe
+  LDX $32
+  DEX
+  STX $32
+
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxe
+endAxe
+  jmp endMovement
+
+
+downMoveJSR1
+  JSR downMoveJSR
+
+backwardAxe1
+  JMP backwardAxe
+
+shiftDown1
+  JSR shiftDown
+
+goToRightMovement2
+  jmp goToRightMovement1
+
+upAxe1
+  jmp upAxe
+endAxe1
+  jmp endAxe
+
+downAxe                              ;; draws
+  LDA $32
+  CMP #5
+  BEQ skipDeleteDown
+  JSR deleteAxe
+
+skipDeleteDown
+  LDA #22
+  ADC $c6
+  STA $c6
+
+  LDA $32
+  CMP #5
+  BEQ initialDec
+  JMP noDec
+
+initialDec
+  LDX $c6
+  DEX
+  STX $c6
+
+noDec
+  JSR drawAxe
+
+  JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
+
+  LDX $32
+  DEX
+  STX $32
+
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxe
   jmp endMovement
 
 backwardAxe                              ;; draws
-  ;CLC
-  ;LDA #$ff
-  ;ADC $c6                        ;; this is c6 + (-1)
-  ;STA $c6
+  LDA $32
+  CMP #5
+  BEQ skipDeleteBackward
+  JSR deleteAxeNegative
+
+skipDeleteBackward
   INC $c6
   JSR drawAxeNegative
 
   JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
 
-  LDA $c6
-  CMP #3
-  BMI backwardAxe
+  LDX $32
+  DEX
+  STX $32
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxeNegative
   jmp endMovement
+upAxe
+  LDA $32
+  CMP #5
+  BEQ skipDeleteUp
+  JSR deleteAxeNegative
 
-shiftDown1:
-  JSR shiftDown
-
-downAxe                              ;; draws
+skipDeleteUp
   LDA #21
   ADC $c6
   STA $c6
-  JSR drawAxe
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
   ;INC $c6
 
-  JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
-  INC $c6
-
-  LDA $c6
-  CMP #66
-  BMI downAxe
+  LDX $32
+  DEX
+  STX $32
+  LDA $32
+  CMP #0
+  BNE endAxe1
+  JSR deleteAxeNegative
   jmp endMovement
 
-upAxe
-  LDA #21
-  ADC $c6
-  STA $c6
-  JSR drawAxeNegative
 
-  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
-  INC $c6
+downMoveJSR
+  JSR downMove
 
-  LDA $c6
-  CMP #66
-  BMI upAxe
-  jmp endMovement
+goToRightMovement1
+  JSR goToRightMovement
 
 checkAxeHitMonster1
   ; check if move is legal
@@ -681,10 +783,22 @@ drawAxeNegative
   LDY #0
   LDA #$24
   STA ($f6),Y
-  JSR wait
+  JSR waitloop
   ; here we are trying to erase the axe sprite
 
 
+  ;JSR waitLoopLong
+
+  RTS
+
+deleteAxe
+  ; Delete the old location ;
+  LDA #$20
+  LDY $c6
+  STA ($f0),Y
+  RTS
+
+deleteAxeNegative
   SEC
   LDA $f0
   SBC $c6
@@ -696,10 +810,7 @@ drawAxeNegative
   LDA #$20
   STA ($f6),Y
 
-  JSR waitLoopLong
-
   RTS
-
 
 drawAxe
 				; New location of the sprite ;
@@ -709,11 +820,9 @@ drawAxe
   CLC
   STA ($f0),Y
   ;JSR waitLongest
-  JSR wait
-  LDA #$20
-  LDY $c6
-  STA ($f0),Y
-  JSR waitLoopLong
+  ;JSR waitloop
+
+;  JSR waitLoopLong
 
   																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
   																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
@@ -742,7 +851,7 @@ loop
 storeLeft
   LDA #1                                                                                                    ;;;;;;;;;;;;;;;;
   STA $f8
-  JSR movement
+  JMP movement
   ;JSR goToGameEndScreenFromAxe
 
 leftMove
@@ -792,7 +901,7 @@ leftMove
 storeRight
   LDA #2
   STA $f8
-  JSR movement
+  JMP movement
 
 goupMove1
   JMP goupMove
@@ -842,7 +951,7 @@ rightMove
 storeDown
   LDA #3
   STA $f8
-  JSR movement
+  JMP movement
 
 goToMovement5
   jmp movement
@@ -909,7 +1018,7 @@ isLegal
 storeUp
   LDA #4
   STA $f8
-  JSR movement
+  JMP movement
 upMove
   ; check if the last direction pressed was up
   ; if it wasn't, then change direction to up, but don't go up
