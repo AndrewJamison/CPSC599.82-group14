@@ -23,3 +23,5 @@ c0: Monster movement flag argument
 c1: Monster collision flag argument
 c2: Monster location argument
 c4: Monster health argument
+b6: Monster left border
+b7: Monster right border
