@@ -9,9 +9,15 @@ end
   dc.w 0
 start
 
+
+
   ;; This is the section where we copy the character values from rom to ram
   LDA #$00
   STA $30
+
+;
+
+;  
 characterLoop
   LDX $30			;loop counter
   LDA $8000,X			;$8000 is starting address of characters in rom
@@ -198,6 +204,9 @@ characterLoop2			;this loop is same as above
   ;; 	01001001	|	FF
   ;; 	10010010	|	FF
 
+;;
+
+;;
   LDA #$00
   STA 7488
   STA 7489
@@ -210,6 +219,8 @@ characterLoop2			;this loop is same as above
   LDA #$AA
   STA 7495
 
+gameStart
+
   LDA #$3
   STA 38400
   LDA #$FF
@@ -218,12 +229,55 @@ characterLoop2			;this loop is same as above
   JSR clear
   LDX #$09
   JSR loadMonsters
+
+;
+; best
+titleScreen   ;load the initial title screen and play the theme music.
+ 
+  LDA #$07
+  STA $1EE2
+  LDA #$0F
+  STA $1EE3
+  LDA #$04
+  STA $1EE4
+  LDA #$0F
+  STA $1EE6
+  LDA #$06
+  STA $1EE7
+  LDA #$17
+  STA $1EE9
+  LDA #$01
+  STA $1EEA
+  LDA #$12
+  STA $1EEB
+
+  LDA #$0
+  STA $1EC1
+  JSR theme
+  JSR wait
+
+preScreen     ;wait untill a player presses space to start the game.
+  LDA 197 
+  CMP #$20
+  BNE preScreen
+  JSR clear
+  JSR loadMonsters
+;
+
   JMP movementStart
   RTS
+
 
   LDA $1c			;This is setting the pointer to character information
   STA $34			;to be in ram instead of ROM
   STA $38
+
+
+
+
+;
+
+;
 
 
 loadMonsters
@@ -445,8 +499,9 @@ drawMonster2
   STA ($40),Y			;store the color into the color location
   RTS
 
-
 movementStart ; Instantiate coordinates($f0) (little endian!)
+
+
   LDA #$E6
   STA $f0
   LDA #$1E
@@ -505,6 +560,10 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   STA $f8
 
 movement
+
+;
+;; works
+;
   JSR wait  ; no teleporting
 
   LDA $e4 ; Check to see if monster 1 is dead; if so don't draw it
@@ -909,6 +968,7 @@ checkAxeHitMonster2Negative
 
 
 checkLowAxe1
+  JSR attackHitSound
   LDA $c8
   CMP $e3
   JSR monster1HitByAxe
@@ -946,6 +1006,12 @@ monster1AxeDead
   ;Delete the monster;
   LDA #$20
   STA $e2
+
+  ;Check if the other monster is dead - if so you win!
+  LDA $14
+  CMP #0
+  BEQ bothMonstersDead
+
   RTS
 
 monster2AxeDead
@@ -955,7 +1021,16 @@ monster2AxeDead
   ;Delete the monster;
   LDA #$20
   STA $12
+
+  ;Check if the other monster is dead - if so you win!
+  LDA $e4
+  CMP #0
+  BEQ bothMonstersDead
+
   RTS
+
+bothMonstersDead
+  JSR gameEndScreenVictory
 
 drawAxeNegative
   SEC
@@ -1036,6 +1111,7 @@ drawAxe
   RTS
 
 goToMovement4
+  JSR borderSound
   jmp movement
 
 endMovement
@@ -1173,14 +1249,12 @@ continueStoreDown
   JMP movement
 
 goToMovement5
+  JSR borderSound
   jmp movement
 
 gotomovement
+  JSR borderSound
   jmp movement
-
-;goupMove
-;  JMP upMove
-  ; see if we just moved down
 
 
 downMove
@@ -1308,6 +1382,7 @@ monsterHitEnd
 	RTS
 
 monsterHit
+  JSR tookDamageSound
   SEC
   LDA $d2
   SBC #$1
@@ -1319,28 +1394,53 @@ monsterHit
   RTS
 
 playerDead
+  JSR dyingMusic
 	JSR clear
 	JMP gameEndScreen
 
 gameEndScreen
-	LDA #$07
+	LDA #$07     ; G
 	STA $1EE2
-	LDA #$01
+	LDA #$01     ; A
 	STA $1EE3
-	LDA #$0D
+	LDA #$0D     ; M
 	STA $1EE4
-	LDA #$05
+	LDA #$05     ; E
 	STA $1EE5
-	LDA #$0F
+	LDA #$0F     ; O
 	STA $1EE7
-	LDA #$16
+	LDA #$16     ; V
 	STA $1EE8
-	LDA #$05
+	LDA #$05     ; E
 	STA $1EE9
-	LDA #$12
+	LDA #$12     ; R
 	STA $1EEA
 	JSR wait
 	JMP gameEndScreen
+
+gameEndScreenVictory
+  JSR wait
+  LDA #$19     ; Y
+  STA $1EE2
+  LDA #$0F     ; O
+	STA $1EE3
+	LDA #$15     ; U
+	STA $1EE4
+	LDA #$17     ; W
+	STA $1EE6
+	LDA #$09     ; I
+	STA $1EE7
+	LDA #$0E    ; N
+	STA $1EE8
+
+  LDA 197
+  CMP #$20 ; Space key
+  BEQ restartGame
+  JMP gameEndScreenVictory
+
+restartGame
+  JSR clear
+  JMP gameStart
 
 
 
@@ -1543,4 +1643,160 @@ displayOneHitpoints
   STA $1E13
   LDA #2
   STA 38419
+  RTS
+
+
+theme:
+  LDA #15
+  STA $900e   ;set volume
+  LDA #173
+  STA $900c
+  LDA #50
+  STA $d3
+  JSR newWait
+
+  LDA #181
+  STA $900c
+  LDA #50
+  STA $d3
+  JSR newWait
+
+  LDA #189
+  STA $900c
+  LDA #70
+  STA $d3
+  JSR newWait
+
+  LDA #0
+  STA $900e
+  LDA #5
+  JSR newWait
+
+  LDA #15
+  STA $900e
+  LDA #158
+  STA $900c
+  LDA #50
+  STA $d3
+  JSR newWait
+
+  LDA #189
+  STA $900c
+  LDA #25
+  STA $d3
+  JSR newWait
+
+  LDA #0
+  STA $900e
+  LDA #25
+  JSR newWait
+
+  LDA #15
+  STA $900e
+  LDA #192
+  STA $900c
+  LDA #10
+  STA $d3
+  JSR newWait
+
+  LDA #200
+  STA $900c
+  LDA #40
+  STA $d3
+  JSR newWait
+
+  LDA #173
+  STA $900c
+  LDA #60
+  STA $d3
+  JSR newWait
+
+
+  LDA #0
+  STA $900e
+  RTS
+
+dyingMusic
+  LDA #15
+  STA $900e
+
+  LDA #192
+  STA $900c
+  LDA #20
+  STA $d3
+  JSR newWait
+
+  LDA #200
+  STA $900c
+  LDA #15
+  STA $d3
+  JSR newWait
+
+  LDA #158
+  STA $900c
+  LDA #30
+  STA $d3
+  JSR newWait
+
+  LDA #0
+  STA $900e
+  RTS
+
+borderSound  
+  LDA #15
+  STA $900e   ;set volume
+  LDA #131
+  STA $900c
+  
+  LDA #5
+  STA $d3
+  JSR newWait
+  
+  LDA #0
+  STA $900e
+  RTS
+
+attackHitSound
+  LDA #15
+  STA $900e   ;set volume
+  LDA #151
+  STA $900c
+  LDA #5
+  STA $d3
+  JSR newWait
+  LDA #131
+  STA $900c
+  LDA #5
+  STA $d3
+  JSR newWait
+  LDA #0
+  STA $900e
+
+tookDamageSound
+  LDA #15
+  STA $900e   ;set volume
+  LDA #131
+  STA $900c
+  LDA #5
+  STA $d3
+  JSR newWait
+  LDA #151
+  STA $900c
+  LDA #5
+  STA $d3
+  JSR newWait
+  LDA #0
+  STA $900e
+
+  RTS
+
+
+newWait       ;basic newWait function.
+  LDA #0
+  STA 162   ;set the Jiffy Clock to 0.
+
+newWaitloop
+  LDA 162   ;Compare Jiffy Clock value with length of time to newWait.
+  CMP $d3
+  BNE newWaitloop
   RTS
