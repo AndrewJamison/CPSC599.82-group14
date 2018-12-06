@@ -653,7 +653,37 @@ monster2Dead
   LDA #$5
   STA 38626
 
+  ; Draw a grass sprite ;
+  LDA #$28
+  STA $1EE2
 
+  STA 7749
+
+  STA 7759
+
+  STA 8121
+
+  STA 8080
+
+  STA 8132
+
+  STA 8006
+
+  
+  LDA #$5
+  STA 38626
+
+  STA 38479
+
+  STA 38469
+
+  STA 38841
+
+  STA 38800
+
+  STA 38852
+
+  STA 38726
 
 continue
 
