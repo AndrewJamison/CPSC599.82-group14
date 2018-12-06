@@ -243,6 +243,18 @@ titleScreen   ;load the initial title screen and play the theme music.
   LDA #$12
   STA $1EEB
 
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E6
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
+  STA $96EB
+
   LDA #$0
   STA $1EC1
   JSR theme
@@ -389,7 +401,8 @@ monsterLeftMove
   SEC
   SBC #$1
   STA $c2
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   JSR drawMonster
   RTS
 
@@ -399,7 +412,8 @@ monsterRightMove
   CLC
   ADC #$1
   STA $c2
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   JSR drawMonster
   RTS
 
@@ -637,33 +651,21 @@ monster2Dead
   ; Draw a grass sprite ;
   LDA #$28
   STA $1EE2
-
   STA 7749
-
   STA 7759
-
   STA 8121
-
   STA 8080
-
   STA 8132
-
   STA 8006
 
 
   LDA #$5
   STA 38626
-
   STA 38479
-
   STA 38469
-
   STA 38841
-
   STA 38800
-
   STA 38852
-
   STA 38726
 
 continue
@@ -1181,7 +1183,8 @@ leftMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
 
 storeRight
@@ -1237,7 +1240,8 @@ rightMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
 
 storeDown
@@ -1259,7 +1263,6 @@ goToMovement5
 gotomovement
   JSR borderSound
   jmp movement
-
 
 downMove
   ; check if move is legal
@@ -1311,8 +1314,11 @@ isLegal
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
+gotomovement7
+  JMP gotomovement
 
 storeUp
   ; Check if axe is currently being thrown; if so don't store new value
@@ -1343,7 +1349,7 @@ upMove
 
   LDA $f7  ; if is below 1E then we can't go down
   CMP #$1E
-  BMI gotomovement
+  BMI gotomovement7
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -1367,18 +1373,32 @@ upMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
 
-monsterHitCheck
+monster1HitCheck
 	LDA $f0
-	CMP $c2
-	BEQ	monsterHitCheck2
+	CMP $e2
+	BEQ	monster1HitCheck2
   JMP monsterHitEnd
-monsterHitCheck2
+monster1HitCheck2
   LDA $f1
-  CMP $c3
-  JSR monsterHit
+  CMP $e3
+  BEQ monsterHit
+
+  RTS
+
+monster2HitCheck
+  LDA $f0
+  CMP $12
+  BEQ	monster2HitCheck2
+  JMP monsterHitEnd
+
+monster2HitCheck2
+  LDA $f1
+  CMP $13
+  BEQ monsterHit
 
   RTS
 
@@ -1396,6 +1416,7 @@ monsterHit
   CMP #$0
   BEQ playerDead  ; If HP is 0 the game ends
   RTS
+
 
 playerDead
   JSR dyingMusic
