@@ -15,9 +15,6 @@ start
   LDA #$00
   STA $30
 
-;
-
-;  
 characterLoop
   LDX $30			;loop counter
   LDA $8000,X			;$8000 is starting address of characters in rom
@@ -204,9 +201,6 @@ characterLoop2			;this loop is same as above
   ;; 	11111111	|	FF
   ;; 	11111111	|	FF
 
-;;
-
-;;
   LDA #$00
   STA 7488
   STA 7489
@@ -232,10 +226,8 @@ gameStart
   LDX #$09
   JSR loadMonsters
 
-;
-; best
 titleScreen   ;load the initial title screen and play the theme music.
- 
+
   LDA #$07
   STA $1EE2
   LDA #$0F
@@ -258,13 +250,12 @@ titleScreen   ;load the initial title screen and play the theme music.
   JSR theme
   JSR wait
 
-preScreen     ;wait untill a player presses space to start the game.
-  LDA 197 
+preScreen     ;wait until a player presses space to start the game.
+  LDA 197
   CMP #$20
   BNE preScreen
   JSR clear
   JSR loadMonsters
-;
 
   JMP movementStart
   RTS
@@ -278,13 +269,6 @@ black
   LDX #$0
   STX 36879
   RTS
-
-
-
-;
-
-;
-
 
 loadMonsters
   ; MONSTER ONE ;
@@ -438,11 +422,7 @@ drawMonster2
   STA ($c2),Y
   RTS
 
-
-;;
-
 movementStart ; Instantiate coordinates($f0) (little endian!)
-
 
   LDA #$E6
   STA $f0
@@ -474,11 +454,9 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #2
   STA $f8
 
-movement
+  ;==== MAIN GAME LOOP ====;
 
-;
-;; works
-;
+movement
   JSR wait  ; no teleporting
 
   LDA $e4 ; Check to see if monster 1 is dead; if so don't draw it
@@ -592,11 +570,6 @@ axeNotBeingThrown
   CMP #$12  ; D key (right)
   BEQ rightMove3
 
-  ; Dont throw axe if axe is currently being thrown ;
-  ;LDA #$32
-  ;CMP #0
-  ;BNE endMovement1
-
   LDA $32
   CMP #0
   BNE endMovement1
@@ -607,7 +580,6 @@ axeNotBeingThrown
   BEQ throwAxe												; if the button pressed was space key throw an axe
 
   JMP endMovement
-
 
 endMovement1
   JMP endMovement
@@ -630,6 +602,8 @@ axeBeingThrown
 
   jmp endMovement
 
+    ;=== END MAIN GAME LOOP ===;
+
 rightMove3
   JMP rightMove2
 
@@ -643,7 +617,6 @@ downMove3
   JMP downMove2
 
 throwAxe
-  ; First check to see if an axe is currently being thrown...if it is, abort
   ; Here we need to throw an axe
 
   ; Set the loop counter for the axe to start at 3:
@@ -981,13 +954,10 @@ deleteAxeNegative
 drawAxe
 				; New location of the sprite ;
 
-  LDA #$24															; currently just draws a $ sign
-  LDY $c6															; load what ever is stored at c3
+  LDA #$24
+  LDY $c6
   CLC
   STA ($f0),Y
-
-  																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
-  																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
   RTS
 
 goToMovement4
@@ -1056,8 +1026,6 @@ leftMove
 
   JSR monsterHitCheck
   jmp newSprite
-
-
 
 storeRight
   ; Check if axe is currently being thrown; if so don't store new value
@@ -1305,7 +1273,7 @@ gameEndScreenVictory
 	STA $1EE6
 	LDA #$09     ; I
 	STA $1EE7
-	LDA #$0E    ; N
+	LDA #$0E     ; N
 	STA $1EE8
 
   LDA 197
@@ -1317,8 +1285,6 @@ restartGame
   JSR clear
   JMP gameStart
 
-
-
 newSprite
   ; New location of the sprite ;
   LDA #$0     ; "@" symbol
@@ -1326,8 +1292,6 @@ newSprite
   STA ($f0),Y
 
   JSR drawBoy
-
-
   jmp movement
 
 deleteBoy
@@ -1418,8 +1382,6 @@ checkLow
   BNE mod
   rts
 
-throwArrow
-
 
 displayHitpoints
   JSR clearHitPoints
@@ -1461,8 +1423,7 @@ displayOneHitpoints
   STA $1E13
   RTS
 
-
-theme:
+theme
   LDA #15
   STA $900e   ;set volume
   LDA #173
@@ -1558,16 +1519,16 @@ dyingMusic
   STA $900e
   RTS
 
-borderSound  
+borderSound
   LDA #15
   STA $900e   ;set volume
   LDA #131
   STA $900c
-  
+
   LDA #5
   STA $d3
   JSR newWait
-  
+
   LDA #0
   STA $900e
   RTS
@@ -1605,7 +1566,6 @@ tookDamageSound
   STA $900e
 
   RTS
-
 
 newWait       ;basic newWait function.
   LDA #0
