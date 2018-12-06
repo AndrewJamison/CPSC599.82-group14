@@ -424,7 +424,7 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
 movement
   JSR wait  ; no teleporting
 
-  LDA $e6 ; Check to see if monster 1 is dead; if so don't draw it
+  LDA $e4 ; Check to see if monster 1 is dead; if so don't draw it
   CMP #0
   BEQ monster1Dead
 
@@ -458,6 +458,11 @@ movement
   LDA $c4  ; Health
   STA $e4
 
+monster1Dead
+  LDA $14 ; Check to see if monster 2 is dead; if so don't draw it
+  CMP #0
+  BEQ monster2Dead
+
   ;Monster Two Input;
   LDA $00  ; Movement flag
   STA $c0
@@ -489,7 +494,7 @@ movement
   STA $14
 
 
-monster1Dead:
+monster2Dead
   ; Draw the player ;
   LDA #$0     ; Player sprite
   LDY #$0
@@ -589,6 +594,7 @@ skipDeleteForward
   JSR drawAxe
 
   JSR checkAxeHitMonster1							; check if monster location is same as axe's location
+  JSR checkAxeHitMonster2
 
   LDX $32
   DEX
@@ -644,6 +650,7 @@ noDec
   JSR drawAxe
 
   JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
+  JSR checkAxeHitMonster2
 
   LDX $32
   DEX
@@ -665,7 +672,8 @@ skipDeleteBackward
   INC $c6
   JSR drawAxeNegative
 
-  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+  JSR checkAxeHitMonster1Negative             ; check if monster location is same as axe's location
+  JSR checkAxeHitMonster2Negative
 
   LDX $32
   DEX
@@ -687,7 +695,8 @@ skipDeleteUp
   STA $c6
   JSR drawAxeNegative
 
-  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+  JSR checkAxeHitMonster1Negative             ; check if monster location is same as axe's location
+  JSR checkAxeHitMonster2Negative
   ;INC $c6
 
   LDX $32
@@ -695,7 +704,7 @@ skipDeleteUp
   STX $32
   LDA $32
   CMP #0
-  BNE endAxe1
+  BNE endAxe2
   JSR deleteAxeNegative
   jmp endMovement
 
@@ -717,11 +726,25 @@ checkAxeHitMonster1
   STA $c8
 
   LDA $c7
-  CMP $e2     ; f6 - 23
-  BEQ checkLowAxe
+  CMP $e2     ; First monster location
+  BEQ checkLowAxe1
+  RTS
+checkAxeHitMonster2
+  ; check if move is legal
+  CLC
+  LDA $f0     ; load player address
+  ADC $c6     ; add the current offset of axe to it
+  STA $c7     ; store this in f6
+  LDA $f1
+  ADC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $12     ; Second monster location
+  BEQ checkLowAxe2
   RTS
 
-checkAxeHitMonsterNegative
+checkAxeHitMonster1Negative
   ; check if move is legal
   SEC
   LDA $f0     ; load player address
@@ -732,33 +755,77 @@ checkAxeHitMonsterNegative
   STA $c8
 
   LDA $c7
-  CMP $e2     ; f6 - 23
-  BEQ checkLowAxe
+  CMP $e2     ; Monster 1 location
+  BEQ checkLowAxe1
+
   RTS
 
-checkLowAxe
+endAxe2
+  JMP endAxe1
+
+checkAxeHitMonster2Negative
+  ; check if move is legal
+  SEC
+  LDA $f0     ; load player address
+  SBC $c6     ; add the current offset of axe to it
+  STA $c7     ; store this in f6
+  LDA $f1
+  SBC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $12     ; Monster 2 locaiton
+  BEQ checkLowAxe2
+  RTS
+
+
+checkLowAxe1
   LDA $c8
   CMP $e3
-  JSR monsterHitByAxe
+  JSR monster1HitByAxe
   rts
 
-monsterHitByAxe ;Reduce monster health by 1; If health is 0 after the subtraction then set the monster alive flag to 0
+checkLowAxe2
+  LDA $c8
+  CMP $13
+  JSR monster2HitByAxe
+  rts
+
+
+monster1HitByAxe ;Reduce monster health by 1; If health is 0 after the subtraction then set the monster alive flag to 0
   LDA $e4
   SEC
   SBC #1
   CMP #0
-  BEQ monsterDead
+  BEQ monster1AxeDead
   STA $e4
   RTS
 
-monsterDead
+monster2HitByAxe ;Reduce monster health by 1; If health is 0 after the subtraction then set the monster alive flag to 0
+  LDA $14
+  SEC
+  SBC #1
+  CMP #0
+  BEQ monster2AxeDead
+  STA $14
+  RTS
+
+monster1AxeDead
   LDA #0
   STA $e4
-  STA $e6
 
   ;Delete the monster;
   LDA #$20
   STA $e2
+  RTS
+
+monster2AxeDead
+  LDA #0
+  STA $14
+
+  ;Delete the monster;
+  LDA #$20
+  STA $12
   RTS
 
 
