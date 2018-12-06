@@ -157,6 +157,53 @@ characterLoop2			;this loop is same as above
   LDA #$54
   STA 7479
 
+  ;; This section is adding a skeleton sprite @ #$27
+  ;; 	BINARY		|	HEX
+
+  ;; 	00011100	|	1C
+  ;; 	00100010	|	22
+  ;; 	01010101	|	55
+  ;; 	01000001	|	41
+  ;; 	01001001	|	49
+  ;; 	01000001	|	41
+  ;; 	01010101	|	55
+  ;; 	00111110	|	3E
+
+  LDA #$1C
+  STA 7480
+  LDA #$22
+  STA 7481
+  LDA #$55
+  STA 7482
+  LDA #$41
+  STA 7483
+  LDA #$49
+  STA 7484
+  LDA #$41
+  STA 7485
+  LDA #$55
+  STA 7486
+  LDA #$3E
+  STA 7487
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   LDA #$3
   STA 38400
@@ -164,40 +211,10 @@ characterLoop2			;this loop is same as above
   STA 7680
 
 
-  JSR clear
-  JSR black
-  LDX #$09
 
-titleScreen   ;load the initial title screen and play the theme music.
- 
-  LDA #$07
-  STA $1EE2
-  LDA #$0F
-  STA $1EE3
-  LDA #$04
-  STA $1EE4
-  LDA #$0F
-  STA $1EE6
-  LDA #$06
-  STA $1EE7
-  LDA #$17
-  STA $1EE9
-  LDA #$01
-  STA $1EEA
-  LDA #$12
-  STA $1EEB
 
-  LDA #$0
-  STA $1EC1
-  JSR theme
-  JSR wait
 
-preScreen     ;wait untill a player presses space to start the game.
-  LDA 197 
-  CMP #$20
-  BNE preScreen
 
-gameStart
 
   JSR clear
   JSR black
@@ -219,6 +236,7 @@ black
   RTS
 
 loadMonsters
+  ; MONSTER ONE ;
   LDA #$D4  ; $e2-e3 = #$1ED4 < - 1st monster starting location
   STA $e2
   LDA #$1E
@@ -227,58 +245,104 @@ loadMonsters
   LDA #$1   ; Collision flag for 1st monster
   STA $e0
 
-  LDA #$28
+  LDA #3   ; Monster 1 health (starts at 3)
+  STA $e4
+
+  LDA #$29
   LDY #$0
   STA ($e2),Y
+  ; END MONSTER ONE ;
+
+  ; MONSTER TWO ;
+  LDA #$B6
+  STA $12
+  LDA #$1E
+  STA $13
+
+  LDA #$1
+  STA $11
+
+  LDA #3
+  STA $14
+
+  LDA #$27
+  LDY #$0
+  STA ($12),Y
+  ; END MONSTER TWO ;
+
   RTS
 
 monsterMovement
-	LDA $d0
-	CMP #$0
-	BEQ setMonsterFlag
 
-	LDA #$0
-	STA $d0
+  JSR setMonsterFlag
 
-  LDA $e2
-  CMP #$D5
-  BEQ leftMoveBorder
+  LDA $c2
+  CMP $b7
+  BEQ case1
 
-  LDA $e2
-  CMP #$D0
-  BEQ rightMoveBorder
+  LDA $c2
+  CMP $b6
+  BEQ case2
 
-  LDA $e0
+  LDA $c1
   CMP #$1
-  BEQ monsterLeftMove
+  BEQ case3
 
-  LDA $e0
+  LDA $c1
   CMP #$0
-  BEQ monsterRightMove
+  BEQ case4
+
+case1
+  JSR leftMoveBorder
+  JMP monsterMoveCleanup
+
+case2
+  JSR rightMoveBorder
+  JMP monsterMoveCleanup
+
+case3
+  JSR monsterLeftMove
+  JMP monsterMoveCleanup
+
+case4
+
+  JSR monsterRightMove
+  JMP monsterMoveCleanup
+
+monsterMoveCleanup
 
   RTS
 
 setMonsterFlag
+  LDA $c0
+  CMP #0
+  BEQ monsterFlagZero ; Check if the flag is 0; if so set it to one and skip monster movement
+
+  LDA #0  ; Otherwise if the flag is 0 continue with movement
+  STA $c0
+  RTS
+
+monsterFlagZero
 	LDA #$1
-	STA $d0
-	JMP continue
+	STA $c0
+	JMP monsterMoveCleanup
 
 monsterLeftMove
   JSR eraseMonster
-  LDA $e2
+  LDA $c2
   SEC
   SBC #$1
-  STA $e2
+  STA $c2
   JSR monsterHitCheck
   JSR drawMonster
   RTS
 
 monsterRightMove
   JSR eraseMonster
-  LDA $e2
+  LDA $c2
   CLC
   ADC #$1
-  STA $e2
+  STA $c2
   JSR monsterHitCheck
   JSR drawMonster
   RTS
@@ -286,28 +350,44 @@ monsterRightMove
 leftMoveBorder
   JSR monsterLeftMove
   LDA #$1
-  STA $e0
+  STA $c1
   RTS
 
 rightMoveBorder
   JSR monsterRightMove
   LDA #$0
-  STA $e0
+  STA $c1
   RTS
 
 eraseMonster
   LDA #$20    ; " " symbol
   LDY #$0
-  STA ($e2),Y
+  STA ($c2),Y
   RTS
 
 drawMonster
+  ; Check to see which monster it is we want to draw (different sprites) ;
+  LDA $20 ;$20 contains the current monster (0 = monster 1, 1 = monster 2)
+  CMP #$0
+  BEQ drawMonster1
+
+  CMP #$1
+  BEQ drawMonster2
+
+drawMonster1
   ; New location of the sprite ;
   LDA #$29
   LDY #$0
-  STA ($e2),Y
-
+  STA ($c2),Y
   RTS
+drawMonster2
+  ; New location of the sprite ;
+  LDA #$27
+  LDY #$0
+  STA ($c2),Y
+  RTS
+
+
 
 
 movementStart ; Instantiate coordinates($f0) (little endian!)
@@ -335,11 +415,81 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDY #$0
   STA ($a0),Y
 
+  LDA #0
+  STA $32
+
+  LDA #2
+  STA $f8
+
 movement
   JSR wait  ; no teleporting
 
+  LDA $e6 ; Check to see if monster 1 is dead; if so don't draw it
+  CMP #0
+  BEQ monster1Dead
+
+  ;Monster One Input;
+  LDA $d0  ; Movement flag
+  STA $c0
+  LDA $e0  ; Collision flag
+  STA $c1
+  LDA $e2  ; Location
+  STA $c2
+  LDA $e3
+  STA $c3
+  LDA $e4  ; Health
+  STA $c4
+  LDA #$D0
+  STA $b6 ; Left border
+  LDA #$D5
+  STA $b7 ; Right border
+  LDA #0
+  STA $20 ; Current monster flag (0 = monster 1)
+
   JSR monsterMovement
 
+  ;Load the output back into Monster One;
+  LDA $c0  ; Movement flag
+  STA $d0
+  LDA $c1  ; Collision flag
+  STA $e0
+  LDA $c2  ; Location
+  STA $e2
+  LDA $c4  ; Health
+  STA $e4
+
+  ;Monster Two Input;
+  LDA $00  ; Movement flag
+  STA $c0
+  LDA $11  ; Collision flag
+  STA $c1
+  LDA $12  ; Location
+  STA $c2
+  LDA $13
+  STA $c3
+  LDA $14  ; Health
+  STA $c4
+  LDA #$B1
+  STA $b6 ; Left border
+  LDA #$B8
+  STA $b7 ; Right border
+  LDA #1
+  STA $20 ; Current monster flag (1 = monster 2)
+
+  JSR monsterMovement
+
+  ;Load the output back into Monster Two;
+  LDA $c0  ; Movement flag
+  STA $10
+  LDA $c1  ; Collision flag
+  STA $11
+  LDA $c2  ; Location
+  STA $12
+  LDA $c4  ; Health
+  STA $14
+
+
+monster1Dead:
   ; Draw the player ;
   LDA #$0     ; Player sprite
   LDY #$0
@@ -352,45 +502,209 @@ movement
 
 continue
 
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #0
+  BEQ axeNotBeingThrown
+
+  JMP axeBeingThrown
+
+
+axeNotBeingThrown
+
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
   ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
   ; being pressed or not)                                                                      ;
   LDA $028D
   AND #$1
   CMP #$1
-  BEQ shiftDown
+  BEQ shiftDown1
 
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$17  ; Right arrow key
-  BEQ goToRightMovement
+  BEQ goToRightMovement2
 
   CMP #$1F ; Down arrow key
-  BEQ downMove1
+  BEQ downMoveJSR1
 
   CMP #$20															; here we're comparing if button pressed is space key
-  BEQ throwAxe														; if the button pressed was space key throw an axe
+  BEQ throwAxe												; if the button pressed was space key throw an axe
+
+  JMP endMovement
+
+
+axeBeingThrown
+  ; Otherwise if an axe is currently being thrown then we want to continue the throw loop
+  ; Check to see the original direction the player was facing when they threw the axe and throw it based on that
+  LDA $f8
+  CMP #2
+  BEQ forwardAxe
+  LDA $f8
+  CMP #1
+  BEQ backwardAxe1
+  LDA $f8
+  CMP #3
+  BEQ downAxe
+  LDA $f8
+  CMP #4
+  BEQ upAxe1
 
   jmp endMovement
-
 throwAxe
-  ; Here we need to throw an axe 									; NEED AXE SPRITE FOR THIS TO WORK, currently using "$" symbol
+  ; Here we need to throw an axe
 
   ; once an axe is thrown. We need to check if it hit an enemy
 
+  ; Set the loop counter for the axe to start at 3:
+  LDA #5
+  STA $32   ; $32 is the axe loop counter
+
   ;; draw an axe
+
+
   LDA #0
-  STA $c6															; storing value into f3 to loop
+  STA $c6
+
+  ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction
+  LDA $f8
+  CMP #$1
+  BEQ backwardAxe
+  LDA $f8
+  CMP #3
+  BEQ downAxe
+  LDA $f8
+  CMP #4
+  BEQ upAxe1
+
+														; storing value into f3 to loop
+
 forwardAxe															;; draws
+  LDA $32
+  CMP #5
+  BEQ skipDeleteForward
+  JSR deleteAxe
+
+skipDeleteForward
   INC $c6
   JSR drawAxe
 
   JSR checkAxeHitMonster1							; check if monster location is same as axe's location
 
-  LDA $c6
-  CMP #3
-  BMI forwardAxe
+  LDX $32
+  DEX
+  STX $32
+
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxe
+endAxe
   jmp endMovement
+
+
+downMoveJSR1
+  JSR downMoveJSR
+
+backwardAxe1
+  JMP backwardAxe
+
+shiftDown1
+  JSR shiftDown
+
+goToRightMovement2
+  jmp goToRightMovement1
+
+upAxe1
+  jmp upAxe
+endAxe1
+  jmp endAxe
+
+downAxe                              ;; draws
+  LDA $32
+  CMP #5
+  BEQ skipDeleteDown
+  JSR deleteAxe
+
+skipDeleteDown
+  LDA #22
+  ADC $c6
+  STA $c6
+
+  LDA $32
+  CMP #5
+  BEQ initialDec
+  JMP noDec
+
+initialDec
+  LDX $c6
+  DEX
+  STX $c6
+
+noDec
+  JSR drawAxe
+
+  JSR checkAxeHitMonster1             ; check if monster location is same as axe's location
+
+  LDX $32
+  DEX
+  STX $32
+
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxe
+  jmp endMovement
+
+backwardAxe                              ;; draws
+  LDA $32
+  CMP #5
+  BEQ skipDeleteBackward
+  JSR deleteAxeNegative
+
+skipDeleteBackward
+  INC $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+
+  LDX $32
+  DEX
+  STX $32
+  LDA $32
+  CMP #0
+  BNE endAxe
+  JSR deleteAxeNegative
+  jmp endMovement
+upAxe
+  LDA $32
+  CMP #5
+  BEQ skipDeleteUp
+  JSR deleteAxeNegative
+
+skipDeleteUp
+  LDA #21
+  ADC $c6
+  STA $c6
+  JSR drawAxeNegative
+
+  JSR checkAxeHitMonsterNegative             ; check if monster location is same as axe's locatio
+  ;INC $c6
+
+  LDX $32
+  DEX
+  STX $32
+  LDA $32
+  CMP #0
+  BNE endAxe1
+  JSR deleteAxeNegative
+  jmp endMovement
+
+
+downMoveJSR
+  JSR downMove
+
+goToRightMovement1
+  JSR goToRightMovement
 
 checkAxeHitMonster1
   ; check if move is legal
@@ -403,16 +717,51 @@ checkAxeHitMonster1
   STA $c8
 
   LDA $c7
-  CMP $e2 ; f6 - 23
+  CMP $e2     ; f6 - 23
+  BEQ checkLowAxe
+  RTS
+
+checkAxeHitMonsterNegative
+  ; check if move is legal
+  SEC
+  LDA $f0     ; load player address
+  SBC $c6     ; add the current offset of axe to it
+  STA $c7     ; store this in f6
+  LDA $f1
+  SBC #00   ; A - 0 - (1 - carry)
+  STA $c8
+
+  LDA $c7
+  CMP $e2     ; f6 - 23
   BEQ checkLowAxe
   RTS
 
 checkLowAxe
-  JSR attackHitSound
   LDA $c8
   CMP $e3
-  BEQ goToGameEndScreenFromAxe
+  JSR monsterHitByAxe
   rts
+
+monsterHitByAxe ;Reduce monster health by 1; If health is 0 after the subtraction then set the monster alive flag to 0
+  LDA $e4
+  SEC
+  SBC #1
+  CMP #0
+  BEQ monsterDead
+  STA $e4
+  RTS
+
+monsterDead
+  LDA #0
+  STA $e4
+  STA $e6
+
+  ;Delete the monster;
+  LDA #$20
+  STA $e2
+  RTS
+
+
 
 
 goToRightMovement:
@@ -423,35 +772,73 @@ goToRightMovement:
   ;STA ($f0),Y
  ; RTS
 
+drawAxeNegative
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
+  LDY #0
+  LDA #$24
+  STA ($f6),Y
+  JSR waitloop
+  ; here we are trying to erase the axe sprite
+
+
+  ;JSR waitLoopLong
+
+  RTS
+
+deleteAxe
+  ; Delete the old location ;
+  LDA #$20
+  LDY $c6
+  STA ($f0),Y
+  RTS
+
+deleteAxeNegative
+  SEC
+  LDA $f0
+  SBC $c6
+  STA $f6
+  LDA $f1
+  SBC #00 ; f1 - 0 - (1- carry)
+  STA $f7
+  LDY #0
+  LDA #$20
+  STA ($f6),Y
+
+  RTS
+
 drawAxe
 				; New location of the sprite ;
 
   LDA #$24															; currently just draws a $ sign
   LDY $c6															; load what ever is stored at c3
+  CLC
   STA ($f0),Y
   ;JSR waitLongest
-  JSR wait
-  LDA #$20
-  LDY $c6
-  STA ($f0),Y
-  JSR waitLoopLong
+  ;JSR waitloop
+
+;  JSR waitLoopLong
 
   																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
   																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
   RTS
 
 goToMovement4
-  JSR borderSound
   jmp movement
-downMove1:
-  jmp downMove
+
 
 shiftDown
   LDA 197 ; $197 contains the current key being held down
+
   CMP #$17  ; Left arrow key
-  BEQ leftMove
+  BEQ leftMove ;
   CMP #$1F ; Up arrow key
-  BEQ goupMove
+  BEQ goupMove1
 
 endMovement
   JSR displayHitpoints
@@ -461,7 +848,22 @@ loop
   nop
   jmp loop
 
+storeLeft
+  LDA #1                                                                                                    ;;;;;;;;;;;;;;;;
+  STA $f8
+  JMP movement
+  ;JSR goToGameEndScreenFromAxe
+
 leftMove
+  ; first we should check if the last movement direction was left
+  ; if the last direction we moved was left, then continue to move left,
+  ; otherwise, update our new direction we're facing (f8) to left, and return to main game loop
+
+  LDA $f8
+  CMP #$1
+  BNE storeLeft
+
+
 ; $f0 = $f0 - 1 (one space left)
   LDA #22
   STA $f4
@@ -494,9 +896,22 @@ leftMove
   JSR monsterHitCheck
   jmp newSprite
 
-goToGameEndScreenFromAxe
-  jmp gameEndScreen
+
+
+storeRight
+  LDA #2
+  STA $f8
+  JMP movement
+
+goupMove1
+  JMP goupMove
+
 rightMove
+
+  ;; check if right was last pressed
+  LDA $f8
+  CMP #2
+  BNE storeRight
   ; Delete old location of sprite ;
 
   ; first check if right move is legal
@@ -505,7 +920,9 @@ rightMove
   JSR beginMod
   LDA $f6
   CMP #1
-  BEQ goToMovement4
+  BEQ goToMovement5
+
+
 
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -531,16 +948,28 @@ rightMove
   JSR monsterHitCheck
   jmp newSprite
 
+storeDown
+  LDA #3
+  STA $f8
+  JMP movement
+
+goToMovement5
+  jmp movement
 
 gotomovement
-  JSR borderSound
   jmp movement
 
 goupMove
   JMP upMove
+  ; see if we just moved down
+
 
 downMove
   ; check if move is legal
+  LDA $f8
+  CMP #3
+  BNE storeDown
+
   CLC
   LDA $f0
   ADC #22
@@ -586,7 +1015,17 @@ isLegal
   JSR monsterHitCheck
   jmp newSprite
 
+storeUp
+  LDA #4
+  STA $f8
+  JMP movement
 upMove
+  ; check if the last direction pressed was up
+  ; if it wasn't, then change direction to up, but don't go up
+  LDA $f8
+  CMP #4
+  BNE storeUp
+
   ; first check if move is legal
   SEC
   LDA $f0
@@ -626,12 +1065,12 @@ upMove
 
 monsterHitCheck
 	LDA $f0
-	CMP $e2
+	CMP $c2
 	BEQ	monsterHitCheck2
   JMP monsterHitEnd
 monsterHitCheck2
   LDA $f1
-  CMP $e3
+  CMP $c3
   JSR monsterHit
 
   RTS
@@ -640,7 +1079,6 @@ monsterHitEnd
 	RTS
 
 monsterHit
-  JSR tookDamageSound
   SEC
   LDA $d2
   SBC #$1
@@ -652,7 +1090,6 @@ monsterHit
   RTS
 
 playerDead
-  JSR dyingMusic
 	JSR clear
 	JMP gameEndScreen
 
@@ -674,13 +1111,6 @@ gameEndScreen
 	LDA #$12
 	STA $1EEA
 	JSR wait
-
-  LDA 197
-  CMP #$20
-  BNE gameEndScreen
-
-  JMP gameStart
-
 	JMP gameEndScreen
 
 
@@ -826,160 +1256,3 @@ displayOneHitpoints
   LDA #$25
   STA $1E13
   RTS
-
-theme:
-  LDA #15
-  STA $900e   ;set volume
-  LDA #173
-  STA $900c
-  LDA #50
-  STA $d3
-  JSR newWait
-
-  LDA #181
-  STA $900c
-  LDA #50
-  STA $d3
-  JSR newWait
-
-  LDA #189
-  STA $900c
-  LDA #70
-  STA $d3
-  JSR newWait
-
-  LDA #0
-  STA $900e
-  LDA #5
-  JSR newWait
-
-  LDA #15
-  STA $900e
-  LDA #158
-  STA $900c
-  LDA #50
-  STA $d3
-  JSR newWait
-
-  LDA #189
-  STA $900c
-  LDA #25
-  STA $d3
-  JSR newWait
-
-  LDA #0
-  STA $900e
-  LDA #25
-  JSR newWait
-
-  LDA #15
-  STA $900e
-  LDA #192
-  STA $900c
-  LDA #10
-  STA $d3
-  JSR newWait
-
-  LDA #200
-  STA $900c
-  LDA #40
-  STA $d3
-  JSR newWait
-
-  LDA #173
-  STA $900c
-  LDA #60
-  STA $d3
-  JSR newWait
-
-
-  LDA #0
-  STA $900e
-  RTS
-
-dyingMusic
-  LDA #15
-  STA $900e
-
-  LDA #192
-  STA $900c
-  LDA #20
-  STA $d3
-  JSR newWait
-
-  LDA #200
-  STA $900c
-  LDA #15
-  STA $d3
-  JSR newWait
-
-  LDA #158
-  STA $900c
-  LDA #30
-  STA $d3
-  JSR newWait
-
-  LDA #0
-  STA $900e
-  RTS
-
-borderSound  
-  LDA #15
-  STA $900e   ;set volume
-  LDA #131
-  STA $900c
-  
-  LDA #5
-  STA $d3
-  JSR newWait
-  
-  LDA #0
-  STA $900e
-  RTS
-
-attackHitSound
-  LDA #15
-  STA $900e   ;set volume
-  LDA #151
-  STA $900c
-  LDA #5
-  STA $d3
-  JSR newWait
-  LDA #131
-  STA $900c
-  LDA #5
-  STA $d3
-  JSR newWait
-  LDA #0
-  STA $900e
-
-tookDamageSound
-  LDA #15
-  STA $900e   ;set volume
-  LDA #131
-  STA $900c
-  LDA #5
-  STA $d3
-  JSR newWait
-  LDA #151
-  STA $900c
-  LDA #5
-  STA $d3
-  JSR newWait
-  LDA #0
-  STA $900e
-
-  RTS
-
-
-newWait       ;basic newWait function.
-  LDA #0
-  STA 162   ;set the Jiffy Clock to 0.
-
-newWaitloop
-  LDA 162   ;Compare Jiffy Clock value with length of time to newWait.
-  CMP $d3
-  BNE newWaitloop
-  RTS
-
-
