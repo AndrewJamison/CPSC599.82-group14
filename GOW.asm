@@ -251,6 +251,18 @@ titleScreen   ;load the initial title screen and play the theme music.
   LDA #$12
   STA $1EEB
 
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E6
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
+  STA $96EB
+
   LDA #$0
   STA $1EC1
   JSR theme
@@ -656,33 +668,21 @@ monster2Dead
   ; Draw a grass sprite ;
   LDA #$28
   STA $1EE2
-
   STA 7749
-
   STA 7759
-
   STA 8121
-
   STA 8080
-
   STA 8132
-
   STA 8006
 
   
   LDA #$5
   STA 38626
-
   STA 38479
-
   STA 38469
-
   STA 38841
-
   STA 38800
-
   STA 38852
-
   STA 38726
 
 continue
