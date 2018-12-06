@@ -211,6 +211,8 @@ characterLoop2			;this loop is same as above
   STA 7494
   STA 7495
 
+gameStart
+
   LDA #$3
   STA 38400
   LDA #$FF
@@ -857,6 +859,12 @@ monster1AxeDead
   ;Delete the monster;
   LDA #$20
   STA $e2
+
+  ;Check if the other monster is dead - if so you win!
+  LDA $14
+  CMP #0
+  BEQ bothMonstersDead
+
   RTS
 
 monster2AxeDead
@@ -866,7 +874,16 @@ monster2AxeDead
   ;Delete the monster;
   LDA #$20
   STA $12
+
+  ;Check if the other monster is dead - if so you win!
+  LDA $e4
+  CMP #0
+  BEQ bothMonstersDead
+
   RTS
+
+bothMonstersDead
+  JSR gameEndScreenVictory
 
 drawAxeNegative
   SEC
@@ -1197,24 +1214,48 @@ playerDead
 	JMP gameEndScreen
 
 gameEndScreen
-	LDA #$07
+	LDA #$07     ; G
 	STA $1EE2
-	LDA #$01
+	LDA #$01     ; A
 	STA $1EE3
-	LDA #$0D
+	LDA #$0D     ; M
 	STA $1EE4
-	LDA #$05
+	LDA #$05     ; E
 	STA $1EE5
-	LDA #$0F
+	LDA #$0F     ; O
 	STA $1EE7
-	LDA #$16
+	LDA #$16     ; V
 	STA $1EE8
-	LDA #$05
+	LDA #$05     ; E
 	STA $1EE9
-	LDA #$12
+	LDA #$12     ; R
 	STA $1EEA
 	JSR wait
 	JMP gameEndScreen
+
+gameEndScreenVictory
+  JSR wait
+  LDA #$19     ; Y
+  STA $1EE2
+  LDA #$0F     ; O
+	STA $1EE3
+	LDA #$15     ; U
+	STA $1EE4
+	LDA #$17     ; W
+	STA $1EE6
+	LDA #$09     ; I
+	STA $1EE7
+	LDA #$0E    ; N
+	STA $1EE8
+
+  LDA 197
+  CMP #$20 ; Space key
+  BEQ restartGame
+  JMP gameEndScreenVictory
+
+restartGame
+  JSR clear
+  JMP gameStart
 
 
 
