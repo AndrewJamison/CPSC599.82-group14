@@ -195,23 +195,22 @@ characterLoop2			;this loop is same as above
   ;; 	00000000	|	00
   ;; 	00000000	|	00
   ;; 	00000000	|	00
-  ;; 	10010001	|	91
-  ;; 	10111011	|	BB
-  ;; 	11111111	|	FF
-  ;; 	11111111	|	FF
-  ;; 	11111111	|	FF
+  ;; 	00000000	|	91
+  ;; 	00000000	|	BB
+  ;; 	10010010	|	FF
+  ;; 	01001001	|	FF
+  ;; 	10010010	|	FF
 
   LDA #$00
   STA 7488
   STA 7489
   STA 7490
-  LDA #$91
   STA 7491
-  LDA #$BB
   STA 7492
-  LDA #$FF
+  LDA #$55
   STA 7493
   STA 7494
+  LDA #$AA
   STA 7495
 
 gameStart
@@ -222,7 +221,6 @@ gameStart
   STA 7680
 
   JSR clear
-  JSR black
   LDX #$09
   JSR loadMonsters
 
@@ -265,10 +263,6 @@ preScreen     ;wait until a player presses space to start the game.
   STA $34			;to be in ram instead of ROM
   STA $38
 
-black
-  LDX #$0
-  STX 36879
-  RTS
 
 loadMonsters
   ; MONSTER ONE ;
@@ -286,6 +280,20 @@ loadMonsters
   LDA #$29
   LDY #$0
   STA ($e2),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $e3			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $e2			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
+
   ; END MONSTER ONE ;
 
   ; MONSTER TWO ;
@@ -303,6 +311,19 @@ loadMonsters
   LDA #$27
   LDY #$0
   STA ($12),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $e3			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $e2			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
   ; END MONSTER TWO ;
 
   RTS
@@ -398,6 +419,19 @@ eraseMonster
   LDA #$20    ; " " symbol
   LDY #$0
   STA ($c2),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $c3			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $c2			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
   RTS
 
 drawMonster
@@ -414,12 +448,39 @@ drawMonster1
   LDA #$29
   LDY #$0
   STA ($c2),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $c3			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $c2			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
   RTS
+
 drawMonster2
   ; New location of the sprite ;
   LDA #$27
   LDY #$0
   STA ($c2),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $c3			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $c2			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
   RTS
 
 movementStart ; Instantiate coordinates($f0) (little endian!)
@@ -432,6 +493,20 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$0
   LDY #$0 ; Just using y here for indirect addressing (i.e. to store A into $1EE6)
   STA ($f0),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $f1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $f0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
+
 
   LDA #$3
   STA $d2 ; Player health (starts at 3)
@@ -447,6 +522,19 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #$26
   LDY #$0
   STA ($a0),Y
+
+   CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $a1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $a0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
 
   LDA #0
   STA $32
@@ -543,7 +631,40 @@ monster2Dead
   ; Draw a grass sprite ;
   LDA #$28
   STA $1EE2
+  LDA #$5
+  STA 38626
 
+  ; Draw a grass sprite ;
+  LDA #$28
+  STA $1EE2
+
+  STA 7749
+
+  STA 7759
+
+  STA 8121
+
+  STA 8080
+
+  STA 8132
+
+  STA 8006
+
+
+  LDA #$5
+  STA 38626
+
+  STA 38479
+
+  STA 38469
+
+  STA 38841
+
+  STA 38800
+
+  STA 38852
+
+  STA 38726
 
 continue
 
@@ -928,6 +1049,20 @@ drawAxeNegative
   LDY #0
   LDA #$24
   STA ($f6),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $f7			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $f6			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0
+  STA ($40),Y			;store the color into the color location
+
   RTS
 
 deleteAxe
@@ -936,6 +1071,8 @@ deleteAxe
   LDY $c6
   STA ($f0),Y
   RTS
+
+
 
 deleteAxeNegative
   SEC
@@ -949,6 +1086,8 @@ deleteAxeNegative
   LDA #$20
   STA ($f6),Y
 
+
+
   RTS
 
 drawAxe
@@ -958,6 +1097,23 @@ drawAxe
   LDY $c6
   CLC
   STA ($f0),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $f1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $f0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY $c6
+  STA ($40),Y			;store the color into the color location
+
+
+  																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
+  																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
   RTS
 
 goToMovement4
@@ -1007,6 +1163,7 @@ leftMove
   LDY #$0
   STA ($f0),Y
 
+  JSR deleteSprite
   JSR deleteBoy
 
   ; This chunk of code basically does $f0 - 1 but w/ carry magic
@@ -1062,6 +1219,7 @@ rightMove
   LDY #$0
   STA ($f0),Y
 
+  JSR deleteSprite
   JSR deleteBoy
 
   ; $f0 = $f0 + 1 (one space right)
@@ -1134,6 +1292,8 @@ isLegal
   LDY #$0
   STA ($f0),Y
 
+
+  JSR deleteSprite
   JSR deleteBoy
 
   ; $f0 = $f0 + 22 (one space down)
@@ -1189,6 +1349,7 @@ upMove
   LDY #$0
   STA ($f0),Y
 
+  JSR deleteSprite
   JSR deleteBoy
 
   ; $f0 = $f0 - 22 (one space up)
@@ -1258,6 +1419,18 @@ gameEndScreen
 	STA $1EE9
 	LDA #$12     ; R
 	STA $1EEA
+
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
+
+
 	JSR wait
 	JMP gameEndScreen
 
@@ -1276,6 +1449,17 @@ gameEndScreenVictory
 	LDA #$0E     ; N
 	STA $1EE8
 
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E6
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
+
   LDA 197
   CMP #$20 ; Space key
   BEQ restartGame
@@ -1291,8 +1475,36 @@ newSprite
   LDY #$0
   STA ($f0),Y
 
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $f1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $f0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
+
   JSR drawBoy
   jmp movement
+
+deleteSprite
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $f1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $f0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$1		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
 
 deleteBoy
   LDA #24
@@ -1308,6 +1520,19 @@ deleteBoy
   LDA #$20
   LDY #$0
   STA ($a0),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $a1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $a0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$1		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
 
   RTS
 
@@ -1325,6 +1550,19 @@ drawBoy
   LDA #$26
   LDY #$0
   STA ($a0),Y
+
+  CLC				;Clear the carry so it doesn't fuck with out addition
+  LDA #$78			;78 is the offset we need to add to the HIGH ORDER bits of the boy's location to get his color location
+  STA $f2			;Store it in a temp location
+  LDA $a1			;Load the HIGH ORDER bits of the boy's location
+  ADC $f2			;add our offset to it
+  STA $41			;store it into the high order bit location for his color
+  LDA $a0			;Then just copy the boys low order bits
+  STA $40			;into the color location low order bits
+
+  LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
+  LDY #$0			;load 0 into Y  cause who the fuck knows
+  STA ($40),Y			;store the color into the color location
 
   RTS
 
@@ -1407,20 +1645,25 @@ clearHitPoints
 
 displayThreeHitpoints
   LDA #$25
-  STA $1E13
-  STA $1E14
   STA $1E15
+  LDA #2
+  STA 38421
+  JSR displayTwoHitpoints
   RTS
 
 displayTwoHitpoints
   LDA #$25
-  STA $1E13
   STA $1E14
+  LDA #2
+  STA 38420
+  JSR displayOneHitpoints
   RTS
 
 displayOneHitpoints
   LDA #$25
   STA $1E13
+  LDA #2
+  STA 38419
   RTS
 
 theme
