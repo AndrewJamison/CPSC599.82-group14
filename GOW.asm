@@ -15,9 +15,6 @@ start
   LDA #$00
   STA $30
 
-;
-
-;  
 characterLoop
   LDX $30			;loop counter
   LDA $8000,X			;$8000 is starting address of characters in rom
@@ -204,9 +201,6 @@ characterLoop2			;this loop is same as above
   ;; 	01001001	|	FF
   ;; 	10010010	|	FF
 
-;;
-
-;;
   LDA #$00
   STA 7488
   STA 7489
@@ -256,10 +250,8 @@ gameStart
   LDX #$09
   JSR loadMonsters
 
-;
-; best
 titleScreen   ;load the initial title screen and play the theme music.
- 
+
   LDA #$07
   STA $1EE2
   LDA #$0F
@@ -294,13 +286,12 @@ titleScreen   ;load the initial title screen and play the theme music.
   JSR theme
   JSR wait
 
-preScreen     ;wait untill a player presses space to start the game.
-  LDA 197 
+preScreen     ;wait until a player presses space to start the game.
+  LDA 197
   CMP #$20
   BNE preScreen
   JSR clear
   JSR loadMonsters
-;
 
   JMP movementStart
   RTS
@@ -309,13 +300,6 @@ preScreen     ;wait untill a player presses space to start the game.
   LDA $1c			;This is setting the pointer to character information
   STA $34			;to be in ram instead of ROM
   STA $38
-
-
-
-
-;
-
-;
 
 
 loadMonsters
@@ -343,7 +327,7 @@ loadMonsters
   STA $41			;store it into the high order bit location for his color
   LDA $e2			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -374,7 +358,7 @@ loadMonsters
   STA $41			;store it into the high order bit location for his color
   LDA $e2			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -443,7 +427,8 @@ monsterLeftMove
   SEC
   SBC #$1
   STA $c2
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   JSR drawMonster
   RTS
 
@@ -453,7 +438,8 @@ monsterRightMove
   CLC
   ADC #$1
   STA $c2
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   JSR drawMonster
   RTS
 
@@ -482,7 +468,7 @@ eraseMonster
   STA $41			;store it into the high order bit location for his color
   LDA $c2			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -511,7 +497,7 @@ drawMonster1
   STA $41			;store it into the high order bit location for his color
   LDA $c2			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -531,14 +517,13 @@ drawMonster2
   STA $41			;store it into the high order bit location for his color
   LDA $c2			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$2		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
   RTS
 
 movementStart ; Instantiate coordinates($f0) (little endian!)
-
 
   LDA #$E6
   STA $f0
@@ -557,11 +542,11 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   STA $41			;store it into the high order bit location for his color
   LDA $f0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
-  
+
 
   LDA #$3
   STA $d2 ; Player health (starts at 3)
@@ -586,7 +571,7 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   STA $41			;store it into the high order bit location for his color
   LDA $a0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -597,11 +582,9 @@ movementStart ; Instantiate coordinates($f0) (little endian!)
   LDA #2
   STA $f8
 
-movement
+  ;==== MAIN GAME LOOP ====;
 
-;
-;; works
-;
+movement
   JSR wait  ; no teleporting
 
   LDA $e4 ; Check to see if monster 1 is dead; if so don't draw it
@@ -701,7 +684,7 @@ monster2Dead
   STA 8132
   STA 8006
 
-  
+
   LDA #$5
   STA 38626
   STA 38479
@@ -835,11 +818,6 @@ axeNotBeingThrown
   CMP #$12  ; D key (right)
   BEQ rightMove3
 
-  ; Dont throw axe if axe is currently being thrown ;
-  ;LDA #$32
-  ;CMP #0
-  ;BNE endMovement1
-
   LDA $32
   CMP #0
   BNE endMovement1
@@ -850,7 +828,6 @@ axeNotBeingThrown
   BEQ throwAxe												; if the button pressed was space key throw an axe
 
   JMP endMovement
-
 
 endMovement1
   JMP endMovement
@@ -873,6 +850,8 @@ axeBeingThrown
 
   jmp endMovement
 
+    ;=== END MAIN GAME LOOP ===;
+
 rightMove3
   JMP rightMove2
 
@@ -886,7 +865,6 @@ downMove3
   JMP downMove2
 
 throwAxe
-  ; First check to see if an axe is currently being thrown...if it is, abort
   ; Here we need to throw an axe
 
   ; Set the loop counter for the axe to start at 3:
@@ -1207,7 +1185,7 @@ drawAxeNegative
   STA $41			;store it into the high order bit location for his color
   LDA $f6			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0
   STA ($40),Y			;store the color into the color location
@@ -1221,7 +1199,7 @@ deleteAxe
   STA ($f0),Y
   RTS
 
-  
+
 
 deleteAxeNegative
   SEC
@@ -1242,8 +1220,8 @@ deleteAxeNegative
 drawAxe
 				; New location of the sprite ;
 
-  LDA #$24															; currently just draws a $ sign
-  LDY $c6															; load what ever is stored at c3
+  LDA #$24
+  LDY $c6
   CLC
   STA ($f0),Y
 
@@ -1255,7 +1233,7 @@ drawAxe
   STA $41			;store it into the high order bit location for his color
   LDA $f0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY $c6
   STA ($40),Y			;store the color into the color location
@@ -1330,10 +1308,9 @@ leftMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
-
-
 
 storeRight
   ; Check if axe is currently being thrown; if so don't store new value
@@ -1388,7 +1365,8 @@ rightMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
 
 storeDown
@@ -1410,7 +1388,6 @@ goToMovement5
 gotomovement
   JSR borderSound
   jmp movement
-
 
 downMove
   ; check if move is legal
@@ -1462,8 +1439,11 @@ isLegal
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
+gotomovement7
+  JMP gotomovement
 
 storeUp
   ; Check if axe is currently being thrown; if so don't store new value
@@ -1494,7 +1474,7 @@ upMove
 
   LDA $f7  ; if is below 1E then we can't go down
   CMP #$1E
-  BMI gotomovement
+  BMI gotomovement7
   ; Delete old location of sprite ;
   LDA #$20    ; " " symbol (space)
   LDY #$0
@@ -1518,18 +1498,32 @@ upMove
   LDA $f5
   STA $f1
 
-  JSR monsterHitCheck
+  JSR monster1HitCheck
+  JSR monster2HitCheck
   jmp newSprite
 
-monsterHitCheck
+monster1HitCheck
 	LDA $f0
-	CMP $c2
-	BEQ	monsterHitCheck2
+	CMP $e2
+	BEQ	monster1HitCheck2
   JMP monsterHitEnd
-monsterHitCheck2
+monster1HitCheck2
   LDA $f1
-  CMP $c3
-  JSR monsterHit
+  CMP $e3
+  BEQ monsterHit
+
+  RTS
+
+monster2HitCheck
+  LDA $f0
+  CMP $12
+  BEQ	monster2HitCheck2
+  JMP monsterHitEnd
+
+monster2HitCheck2
+  LDA $f1
+  CMP $13
+  BEQ monsterHit
 
   RTS
 
@@ -1547,6 +1541,7 @@ monsterHit
   CMP #$0
   BEQ playerDead  ; If HP is 0 the game ends
   RTS
+
 
 playerDead
   JSR dyingMusic
@@ -1597,7 +1592,7 @@ gameEndScreenVictory
 	STA $1EE6
 	LDA #$09     ; I
 	STA $1EE7
-	LDA #$0E    ; N
+	LDA #$0E     ; N
 	STA $1EE8
 
   LDA #$00
@@ -1620,8 +1615,6 @@ restartGame
   JSR clear
   JMP gameStart
 
-
-
 newSprite
   ; New location of the sprite ;
   LDA #$0     ; "@" symbol
@@ -1636,14 +1629,12 @@ newSprite
   STA $41			;store it into the high order bit location for his color
   LDA $f0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
 
   JSR drawBoy
-
-
   jmp movement
 
 deleteSprite
@@ -1656,7 +1647,7 @@ deleteSprite
   STA $41			;store it into the high order bit location for his color
   LDA $f0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$1		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -1684,7 +1675,7 @@ deleteBoy
   STA $41			;store it into the high order bit location for his color
   LDA $a0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$1		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -1714,7 +1705,7 @@ drawBoy
   STA $41			;store it into the high order bit location for his color
   LDA $a0			;Then just copy the boys low order bits
   STA $40			;into the color location low order bits
-  
+
   LDA #$6		  ;Choose a color (2=red, 1=white, 0=black, more on page 270 of bible)
   LDY #$0			;load 0 into Y  cause who the fuck knows
   STA ($40),Y			;store the color into the color location
@@ -1775,8 +1766,6 @@ checkLow
   BNE mod
   rts
 
-throwArrow
-
 
 displayHitpoints
   JSR clearHitPoints
@@ -1823,8 +1812,7 @@ displayOneHitpoints
   STA 38419
   RTS
 
-
-theme:
+theme
   LDA #15
   STA $900e   ;set volume
   LDA #173
@@ -1920,16 +1908,16 @@ dyingMusic
   STA $900e
   RTS
 
-borderSound  
+borderSound
   LDA #15
   STA $900e   ;set volume
   LDA #131
   STA $900c
-  
+
   LDA #5
   STA $d3
   JSR newWait
-  
+
   LDA #0
   STA $900e
   RTS
@@ -1967,7 +1955,6 @@ tookDamageSound
   STA $900e
 
   RTS
-
 
 newWait       ;basic newWait function.
   LDA #0
