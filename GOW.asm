@@ -186,35 +186,39 @@ characterLoop2			;this loop is same as above
   LDA #$3E
   STA 7487
 
+  ;; This section is adding a grass sprite @ #$28
+  ;; 	BINARY		|	HEX
 
+  ;; 	00000000	|	00
+  ;; 	00000000	|	00
+  ;; 	00011000	|	18
+  ;; 	10100101	|	A5
+  ;; 	01100110	|	66
+  ;; 	11000011	|	C3
+  ;; 	10100101	|	A5
+  ;; 	01111110	|	7E
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  LDA #$00
+  STA 7488
+  LDA #$00
+  STA 7489
+  LDA #$18
+  STA 7490
+  LDA #$A5
+  STA 7491
+  LDA #$66
+  STA 7492
+  LDA #$C3
+  STA 7493
+  LDA #$A5
+  STA 7494
+  LDA #$7E
+  STA 7495
 
   LDA #$3
   STA 38400
   LDA #$FF
   STA 7680
-
-
-
-
-
-
 
   JSR clear
   JSR black
@@ -223,12 +227,9 @@ characterLoop2			;this loop is same as above
   JMP movementStart
   RTS
 
-
   LDA $1c			;This is setting the pointer to character information
   STA $34			;to be in ram instead of ROM
   STA $38
-
-
 
 black
   LDX #$0
