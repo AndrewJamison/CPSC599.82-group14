@@ -191,28 +191,24 @@ characterLoop2			;this loop is same as above
 
   ;; 	00000000	|	00
   ;; 	00000000	|	00
-  ;; 	00011000	|	18
-  ;; 	10100101	|	A5
-  ;; 	01100110	|	66
-  ;; 	11000011	|	C3
-  ;; 	10100101	|	A5
-  ;; 	01111110	|	7E
+  ;; 	00000000	|	00
+  ;; 	10010001	|	91
+  ;; 	10111011	|	BB
+  ;; 	11111111	|	FF
+  ;; 	11111111	|	FF
+  ;; 	11111111	|	FF
 
   LDA #$00
   STA 7488
-  LDA #$00
   STA 7489
-  LDA #$18
   STA 7490
-  LDA #$A5
+  LDA #$91
   STA 7491
-  LDA #$66
+  LDA #$BB
   STA 7492
-  LDA #$C3
+  LDA #$FF
   STA 7493
-  LDA #$A5
   STA 7494
-  LDA #$7E
   STA 7495
 
   LDA #$3
@@ -506,6 +502,11 @@ monster2Dead
   LDY #$0
   STA ($a0),Y
 
+  ; Draw a grass sprite ;
+  LDA #$28
+  STA $1EE2
+
+
 continue
 
   LDA $32   ;$32 contains the axe loop counter
@@ -516,33 +517,31 @@ continue
 
 
 axeNotBeingThrown
-
-  ; SPECIAL CASE FOR THE FIRST AXE THROW ;
-  ;LDA $32   ;$32 contains the axe loop counter
-  ;CMP #4
-  ;BEQ endMovement1
-
-  ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
-  ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
-  ; being pressed or not)                                                                      ;
-;  LDA $028D
-;  AND #$1
-;  CMP #$1
-;  BEQ shiftDown1
-
+                                                                      ;
   LDA 197 ; $197 contains the current key being held down
 
   CMP #$9  ; W key (up)
-  BEQ upMove2
+  BEQ upMove3
 
   CMP #$11  ; A key (left)
-  BEQ leftMove2
+  BEQ leftMove3
 
   CMP #$29  ; S key (down)
-  BEQ downMove2
+  BEQ downMove3
 
-  CMP #$12
-  BEQ rightMove2
+  CMP #$12  ; D key (right)
+  BEQ rightMove3
+
+  ; Dont throw axe if axe is currently being thrown ;
+  ;LDA #$32
+  ;CMP #0
+  ;BNE endMovement1
+
+  LDA $32
+  CMP #0
+  BNE endMovement1
+
+  LDA 197
 
   CMP #$20															; here we're comparing if button pressed is space key
   BEQ throwAxe												; if the button pressed was space key throw an axe
@@ -570,7 +569,21 @@ axeBeingThrown
   BEQ upAxe1
 
   jmp endMovement
+
+rightMove3
+  JMP rightMove2
+
+leftMove3
+  JMP leftMove2
+
+upMove3
+  JMP upMove2
+
+downMove3
+  JMP downMove2
+
 throwAxe
+  ; First check to see if an axe is currently being thrown...if it is, abort
   ; Here we need to throw an axe
 
   ; Set the loop counter for the axe to start at 3:
@@ -611,6 +624,7 @@ skipDeleteForward
   CMP #0
   BNE endAxe
   JSR deleteAxe
+
 endAxe
   LDA $32   ;$32 contains the axe loop counter
   CMP #4
@@ -912,6 +926,13 @@ loop
   jmp loop
 
 storeLeft
+  ; Check if axe is currently being thrown; if so don't store new value
+  LDA $32
+  CMP #0
+  BEQ continueStoreLeft
+  JMP movement
+
+continueStoreLeft
   LDA #1                                                                                                    ;;;;;;;;;;;;;;;;
   STA $f8
   JMP movement
@@ -962,6 +983,14 @@ leftMove
 
 
 storeRight
+  ; Check if axe is currently being thrown; if so don't store new value
+  LDA $32
+  CMP #0
+  BEQ continueStoreRight
+  JMP movement
+
+continueStoreRight
+
   LDA #2
   STA $f8
   JMP movement
@@ -1009,6 +1038,13 @@ rightMove
   jmp newSprite
 
 storeDown
+  ; Check if axe is currently being thrown; if so don't store new value
+  LDA $32
+  CMP #0
+  BEQ continueStoreDown
+  JMP movement
+
+continueStoreDown
   LDA #3
   STA $f8
   JMP movement
@@ -1076,6 +1112,13 @@ isLegal
   jmp newSprite
 
 storeUp
+  ; Check if axe is currently being thrown; if so don't store new value
+  LDA $32
+  CMP #0
+  BEQ continueStoreUp
+  JMP movement
+
+continueStoreUp
   LDA #4
   STA $f8
   JMP movement
