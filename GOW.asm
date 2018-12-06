@@ -1072,10 +1072,6 @@ goToMovement5
 gotomovement
   jmp movement
 
-;goupMove
-;  JMP upMove
-  ; see if we just moved down
-
 
 downMove
   ; check if move is legal
