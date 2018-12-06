@@ -1415,6 +1415,18 @@ gameEndScreen
 	STA $1EE9
 	LDA #$12     ; R
 	STA $1EEA
+
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
+
+
 	JSR wait
 	JMP gameEndScreen
 
@@ -1432,6 +1444,17 @@ gameEndScreenVictory
 	STA $1EE7
 	LDA #$0E    ; N
 	STA $1EE8
+
+  LDA #$00
+  STA $96E2
+  STA $96E3
+  STA $96E4
+  STA $96E5
+  STA $96E6
+  STA $96E7
+  STA $96E8
+  STA $96E9
+  STA $96EA
 
   LDA 197
   CMP #$20 ; Space key
