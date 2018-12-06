@@ -516,27 +516,41 @@ continue
 
 axeNotBeingThrown
 
+  ; SPECIAL CASE FOR THE FIRST AXE THROW ;
+  ;LDA $32   ;$32 contains the axe loop counter
+  ;CMP #4
+  ;BEQ endMovement1
+
   ; $028D contains the "shift down" bit (1st bit). AND it w/ 1 to check if its pressed or not ;
   ; (we need to check this as theres only 2 arrow keys and the direction is based on if shift is ;
   ; being pressed or not)                                                                      ;
-  LDA $028D
-  AND #$1
-  CMP #$1
-  BEQ shiftDown1
+;  LDA $028D
+;  AND #$1
+;  CMP #$1
+;  BEQ shiftDown1
 
   LDA 197 ; $197 contains the current key being held down
 
-  CMP #$17  ; Right arrow key
-  BEQ goToRightMovement2
+  CMP #$9  ; W key (up)
+  BEQ upMove2
 
-  CMP #$1F ; Down arrow key
-  BEQ downMoveJSR1
+  CMP #$11  ; A key (left)
+  BEQ leftMove2
+
+  CMP #$29  ; S key (down)
+  BEQ downMove2
+
+  CMP #$12
+  BEQ rightMove2
 
   CMP #$20															; here we're comparing if button pressed is space key
   BEQ throwAxe												; if the button pressed was space key throw an axe
 
   JMP endMovement
 
+
+endMovement1
+  JMP endMovement
 
 axeBeingThrown
   ; Otherwise if an axe is currently being thrown then we want to continue the throw loop
@@ -558,22 +572,16 @@ axeBeingThrown
 throwAxe
   ; Here we need to throw an axe
 
-  ; once an axe is thrown. We need to check if it hit an enemy
-
   ; Set the loop counter for the axe to start at 3:
   LDA #5
   STA $32   ; $32 is the axe loop counter
-
-  ;; draw an axe
-
-
   LDA #0
   STA $c6
 
   ;;;;;;first we are going to check the direction in which we are facing, then based on that throw the axe in that direction
   LDA $f8
   CMP #$1
-  BEQ backwardAxe
+  BEQ backwardAxe1
   LDA $f8
   CMP #3
   BEQ downAxe
@@ -581,9 +589,7 @@ throwAxe
   CMP #4
   BEQ upAxe1
 
-														; storing value into f3 to loop
-
-forwardAxe															;; draws
+forwardAxe
   LDA $32
   CMP #5
   BEQ skipDeleteForward
@@ -605,25 +611,34 @@ skipDeleteForward
   BNE endAxe
   JSR deleteAxe
 endAxe
-  jmp endMovement
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #4
+  BEQ specialCaseFirstAxe1
+  jmp axeNotBeingThrown
 
+endAxe1
+  JMP endAxe
 
-downMoveJSR1
-  JSR downMoveJSR
+upAxe1
+  JMP upAxe
+
+leftMove2
+  JMP leftMove
+
+upMove2
+  JMP upMove
+
+downMove2
+  JMP downMove
+
+rightMove2
+  JMP rightMove
 
 backwardAxe1
   JMP backwardAxe
 
-shiftDown1
-  JSR shiftDown
-
-goToRightMovement2
-  jmp goToRightMovement1
-
-upAxe1
-  jmp upAxe
-endAxe1
-  jmp endAxe
+specialCaseFirstAxe1
+  JMP specialCaseFirstAxe
 
 downAxe                              ;; draws
   LDA $32
@@ -660,7 +675,11 @@ noDec
   CMP #0
   BNE endAxe
   JSR deleteAxe
-  jmp endMovement
+
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #4
+  BEQ specialCaseFirstAxe
+  jmp axeNotBeingThrown
 
 backwardAxe                              ;; draws
   LDA $32
@@ -682,7 +701,12 @@ skipDeleteBackward
   CMP #0
   BNE endAxe
   JSR deleteAxeNegative
-  jmp endMovement
+
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #4
+  BEQ specialCaseFirstAxe
+  jmp axeNotBeingThrown
+
 upAxe
   LDA $32
   CMP #5
@@ -706,14 +730,15 @@ skipDeleteUp
   CMP #0
   BNE endAxe2
   JSR deleteAxeNegative
-  jmp endMovement
+
+  LDA $32   ;$32 contains the axe loop counter
+  CMP #4
+  BEQ specialCaseFirstAxe
+  jmp axeNotBeingThrown
 
 
-downMoveJSR
-  JSR downMove
-
-goToRightMovement1
-  JSR goToRightMovement
+specialCaseFirstAxe
+  JMP endMovement
 
 checkAxeHitMonster1
   ; check if move is legal
@@ -828,17 +853,6 @@ monster2AxeDead
   STA $12
   RTS
 
-
-
-
-goToRightMovement:
-	JMP rightMove
-;eraseAxe
- ; LDA #$23    ; " " symbol
-  ;LDY #$c6
-  ;STA ($f0),Y
- ; RTS
-
 drawAxeNegative
   SEC
   LDA $f0
@@ -850,12 +864,6 @@ drawAxeNegative
   LDY #0
   LDA #$24
   STA ($f6),Y
-  JSR waitloop
-  ; here we are trying to erase the axe sprite
-
-
-  ;JSR waitLoopLong
-
   RTS
 
 deleteAxe
@@ -886,10 +894,6 @@ drawAxe
   LDY $c6															; load what ever is stored at c3
   CLC
   STA ($f0),Y
-  ;JSR waitLongest
-  ;JSR waitloop
-
-;  JSR waitLoopLong
 
   																	;;HERE WE NEED TO COMPARE THE AXE's POSITION WITH ENEMY POSITION
   																	;;IF THEY'RE THE SAME, THEN DECREMENT ENEMY HEALTH
@@ -897,15 +901,6 @@ drawAxe
 
 goToMovement4
   jmp movement
-
-
-shiftDown
-  LDA 197 ; $197 contains the current key being held down
-
-  CMP #$17  ; Left arrow key
-  BEQ leftMove ;
-  CMP #$1F ; Up arrow key
-  BEQ goupMove1
 
 endMovement
   JSR displayHitpoints
@@ -970,9 +965,6 @@ storeRight
   STA $f8
   JMP movement
 
-goupMove1
-  JMP goupMove
-
 rightMove
 
   ;; check if right was last pressed
@@ -1026,8 +1018,8 @@ goToMovement5
 gotomovement
   jmp movement
 
-goupMove
-  JMP upMove
+;goupMove
+;  JMP upMove
   ; see if we just moved down
 
 
